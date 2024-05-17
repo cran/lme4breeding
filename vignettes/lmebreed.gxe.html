@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Giovanny Covarrubias-Pazaran" />
+
+<meta name="date" content="2024-05-16" />
+
+<title>Fitting genotype by environment models in lme4breeding</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Fitting genotype by environment models in
+lme4breeding</h1>
+<h4 class="author">Giovanny Covarrubias-Pazaran</h4>
+<h4 class="date">2024-05-16</h4>
+
+
+
+<p>The purpose of this vignette is to show how to fit different genotype
+by environment (GxE) models using the lme4breeding package:</p>
+<ol style="list-style-type: decimal">
+<li>Multienvironment model: Main effect model</li>
+<li>Multienvironment model: Diagonal model (DG)</li>
+<li>Multienvironment model: Compund symmetry model (CS) 3.2)
+Multienvironment model: Compund symmetry model + Diagonal (CS+DG)</li>
+<li>Multienvironment model: Unstructured model (US)</li>
+<li>Multienvironment model: Random regression model (RR) 5.2)
+Multienvironment model: Finlay-Wilkinson regression</li>
+<li>Multienvironment model: Factor analytic (reduced rank) model
+(FA)</li>
+<li>Two stage analysis</li>
+</ol>
+<p>When the breeder decides to run a trial and apply selection in a
+single environment (whether because the amount of seed is a limitation
+or there’s no availability for a location) the breeder takes the risk of
+selecting material for a target population of environments (TPEs) using
+an environment that is not representative of the larger TPE. Therefore,
+many breeding programs try to base their selection decision on
+multi-environment trial (MET) data. Models could be adjusted by adding
+additional information like spatial information, experimental design
+information, etc. In this tutorial we will focus mainly on the
+covariance structures for GxE and the incorporation of relationship
+matrices for the genotype effect.</p>
+<div id="met-main-effect-model" class="section level2">
+<h2>1) MET: main effect model</h2>
+<p>A multi-environment model is the one that is fitted when the breeding
+program can afford more than one location. The main effect model assumes
+that GxE doesn’t exist and that the main genotype effect plus the fixed
+effect for environment is enough to predict the genotype effect in all
+locations of interest.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(lme4breeding)</span></code></pre></div>
+<pre><code>## Loading required package: lme4</code></pre>
+<pre><code>## Warning: package &#39;lme4&#39; was built under R version 4.2.3</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre><code>## Warning: package &#39;Matrix&#39; was built under R version 4.2.3</code></pre>
+<pre><code>## Loading required package: crayon</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">data</span>(DT_example)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_example</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>A <span class="ot">&lt;-</span> A_example</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>ansMain <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield <span class="sc">~</span> Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Name),</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>                        <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>                        <span class="at">data=</span>DT)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansMain); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<pre><code>##  Groups   Name        Variance
+##  Name     (Intercept) 4.8559  
+##  Residual             8.1086</code></pre>
+<p>In this model, the only term to be estimated is the one for the
+germplasm (here called <code>Name</code>). For the sake of example we
+have added a relationship matrix among the levels of the random effect
+<code>Name</code>. This is just a diagonal matrix with as many rows and
+columns as levels present in the random effect <code>Name</code>, but
+any other non-diagonal relationship matrix could be used.</p>
+</div>
+<div id="met-diagonal-model-dg" class="section level2">
+<h2>2) MET: diagonal model (DG)</h2>
+<p>A multi-environment model is the one that is fitted when the breeding
+program can afford more than one location. The diagonal model assumes
+that GxE exists and that the genotype variation is expressed differently
+at each location, therefore fitting a variance component for the
+genotype effect at each location. The main drawback is that this model
+assumes no covariance among locations, as if genotypes were independent
+(despite the fact that is the same genotypes). The fixed effect for
+environment plus the location-specific BLUP is used to predict the
+genotype effect in each locations of interest.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">dsc</span>(Env))<span class="sc">$</span>Z</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>diagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(diagFormula))</span></code></pre></div>
+<pre><code>## Yield ~ Env + (0 + CA.2011 + CA.2012 + CA.2013 || Name)</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>ansDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(diagFormula),</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>                      <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>                      <span class="at">data=</span>DT)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansDG); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<pre><code>##  Groups   Name    Variance
+##  Name     CA.2011 17.4934 
+##  Name.1   CA.2012  5.3376 
+##  Name.2   CA.2013  7.8838 
+##  Residual          4.3806</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<pre><code>## [1] 4.380621</code></pre>
+</div>
+<div id="met-compund-symmetry-model-cs" class="section level2">
+<h2>3) MET: compund symmetry model (CS)</h2>
+<p>A multi-environment model is the one that is fitted when the breeding
+program can afford more than one location. The compound symmetry model
+assumes that GxE exists and that a main genotype variance-covariance
+component is expressed across all location. In addition, it assumes that
+a main genotype-by-environment variance is expressed across all
+locations. The main drawback is that the model assumes the same variance
+and covariance among locations. The fixed effect for environment plus
+the main effect for BLUP plus genotype-by-environment effect is used to
+predict the genotype effect in each location of interest.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>DT<span class="sc">$</span>EnvName <span class="ot">&lt;-</span> <span class="fu">paste</span>(DT<span class="sc">$</span>Env, DT<span class="sc">$</span>Name, <span class="at">sep =</span> <span class="st">&quot;:&quot;</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>E <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">Diagonal</span>(<span class="fu">length</span>(<span class="fu">unique</span>(DT<span class="sc">$</span>Env)));</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="fu">colnames</span>(E) <span class="ot">&lt;-</span> <span class="fu">rownames</span>(E) <span class="ot">&lt;-</span> <span class="fu">unique</span>(DT<span class="sc">$</span>Env);E</span></code></pre></div>
+<pre><code>## 3 x 3 diagonal matrix of class &quot;ddiMatrix&quot;
+##         CA.2013 CA.2011 CA.2012
+## CA.2013       1       .       .
+## CA.2011       .       1       .
+## CA.2012       .       .       1</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>EA <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">kronecker</span>(E,A, <span class="at">make.dimnames =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>ansCS <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield <span class="sc">~</span> Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Name) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>EnvName),</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>                    <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A, <span class="at">EnvName=</span>  EA ),</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>                    <span class="at">data=</span>DT)</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansCS); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<pre><code>##  Groups   Name        Variance
+##  EnvName  (Intercept) 5.1732  
+##  Name     (Intercept) 3.6819  
+##  Residual             4.3662</code></pre>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<pre><code>## [1] 4.366211</code></pre>
+<div id="met-compund-symmetry-model-diagonal-csdg" class="section level3">
+<h3>3.2) MET: compund symmetry model + diagonal (CS+DG)</h3>
+<p>A multi-environment model is the one that is fitted when the breeding
+program can afford more than one location. The compound symmetry model
+assumes that GxE exists and that a main genotype variance-covariance
+component is expressed across all location. In addition, it assumes that
+a main genotype-by-environment variance is expressed across all
+locations. The main drawback is that the model assumes the same variance
+and covariance among locations. The fixed effect for environment plus
+the main effect for BLUP plus genotype-by-environment effect is used to
+predict the genotype effect in each location of interest.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">dsc</span>(Env))<span class="sc">$</span>Z</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>csdiagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(csdiagFormula))</span></code></pre></div>
+<pre><code>## Yield ~ Env + (CA.2011 + CA.2012 + CA.2013 || Name)</code></pre>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>ansCSDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(csdiagFormula),</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>                      <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>                      <span class="at">data=</span>DT)</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansCSDG); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<pre><code>##  Groups   Name        Variance
+##  Name     (Intercept)  2.9638 
+##  Name.1   CA.2011     10.4259 
+##  Name.2   CA.2012      2.6589 
+##  Name.3   CA.2013      5.7021 
+##  Residual              4.3976</code></pre>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<pre><code>## [1] 4.397563</code></pre>
+</div>
+</div>
+<div id="met-unstructured-model-us" class="section level2">
+<h2>4) MET: unstructured model (US)</h2>
+<p>A multi-environment model is the one that is fitted when the breeding
+program can afford more than one location. The unstructured model is the
+most flexible model assuming that GxE exists and that an
+environment-specific variance exists in addition to as many covariances
+for each environment-to-environment combinations. The main drawback is
+that is difficult to make this models converge because of the large
+number of variance components, the fact that some of these variance or
+covariance components are zero, and the difficulty in choosing good
+starting values. The fixed effect for environment plus the environment
+specific BLUP (adjusted by covariances) is used to predict the genotype
+effect in each location of interest.</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">dsc</span>(Env))<span class="sc">$</span>Z</span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>usFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;| Name)&quot;</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
+<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(usFormula))</span></code></pre></div>
+<pre><code>## Yield ~ Env + (0 + CA.2011 + CA.2012 + CA.2013 | Name)</code></pre>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a>ansDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(usFormula),</span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>                    <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>                    <span class="at">data=</span>DT)</span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansDG); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<pre><code>##  Groups   Name    Variance Cov          
+##  Name     CA.2011 15.9937               
+##           CA.2012  5.2743   6.173       
+##           CA.2013  7.6897   6.366  0.375
+##  Residual          4.3862</code></pre>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<pre><code>## [1] 4.386173</code></pre>
+</div>
+<div id="met-random-regression-model" class="section level2">
+<h2>5) MET: random regression model</h2>
+<p>A multi-environment model is the one that is fitted when the breeding
+program can afford more than one location. The random regression model
+assumes that the environment can be seen as a continuous variable and
+therefore a variance component for the intercept and a variance
+component for the slope can be fitted. The number of variance components
+will depend on the order of the Legendre polynomial fitted.</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a><span class="co"># library(orthopolynom)</span></span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a><span class="co"># DT$EnvN &lt;- as.numeric(as.factor(DT$Env))</span></span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a><span class="co">#  </span></span>
+<span id="cb33-4"><a href="#cb33-4" tabindex="-1"></a><span class="co"># Z &lt;- with(DT, dsc(leg(EnvN,1)) )$Z</span></span>
+<span id="cb33-5"><a href="#cb33-5" tabindex="-1"></a><span class="co"># rrFormula &lt;- paste0( &quot;Yield ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;| Name)&quot;)</span></span>
+<span id="cb33-6"><a href="#cb33-6" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
+<span id="cb33-7"><a href="#cb33-7" tabindex="-1"></a><span class="co"># ansRR &lt;- lmebreed(as.formula(rrFormula),</span></span>
+<span id="cb33-8"><a href="#cb33-8" tabindex="-1"></a><span class="co">#                   relmat = list(Name = A ),</span></span>
+<span id="cb33-9"><a href="#cb33-9" tabindex="-1"></a><span class="co">#                   data=DT)</span></span>
+<span id="cb33-10"><a href="#cb33-10" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ansRR); print(vc,comp=c(&quot;Variance&quot;))</span></span>
+<span id="cb33-11"><a href="#cb33-11" tabindex="-1"></a><span class="co"># ve &lt;- attr(vc, &quot;sc&quot;)^2; ve</span></span></code></pre></div>
+<p>In addition, we an fit this without covariance:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="co"># library(orthopolynom)</span></span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a><span class="co"># DT$EnvN &lt;- as.numeric(as.factor(DT$Env))</span></span>
+<span id="cb34-3"><a href="#cb34-3" tabindex="-1"></a><span class="co">#  Z &lt;- with(DT, dsc(leg(EnvN,1)) )$Z</span></span>
+<span id="cb34-4"><a href="#cb34-4" tabindex="-1"></a><span class="co"># rrFormula &lt;- paste0( &quot;Yield ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;|| Name)&quot;)</span></span>
+<span id="cb34-5"><a href="#cb34-5" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
+<span id="cb34-6"><a href="#cb34-6" tabindex="-1"></a><span class="co"># ansRR &lt;- lmebreed(as.formula(rrFormula),</span></span>
+<span id="cb34-7"><a href="#cb34-7" tabindex="-1"></a><span class="co">#                   relmat = list(Name = A ),</span></span>
+<span id="cb34-8"><a href="#cb34-8" tabindex="-1"></a><span class="co">#                   data=DT)</span></span>
+<span id="cb34-9"><a href="#cb34-9" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ansRR); print(vc,comp=c(&quot;Variance&quot;))</span></span>
+<span id="cb34-10"><a href="#cb34-10" tabindex="-1"></a><span class="co"># ve &lt;- attr(vc, &quot;sc&quot;)^2; ve</span></span></code></pre></div>
+<div id="finlay-wilkinson-regression" class="section level3">
+<h3>5.2) Finlay-Wilkinson regression</h3>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a><span class="fu">data</span>(DT_h2)</span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_h2</span>
+<span id="cb35-3"><a href="#cb35-3" tabindex="-1"></a><span class="do">## build the environmental index</span></span>
+<span id="cb35-4"><a href="#cb35-4" tabindex="-1"></a>ei <span class="ot">&lt;-</span> <span class="fu">aggregate</span>(y<span class="sc">~</span>Env, <span class="at">data=</span>DT,<span class="at">FUN=</span>mean)</span>
+<span id="cb35-5"><a href="#cb35-5" tabindex="-1"></a><span class="fu">colnames</span>(ei)[<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="st">&quot;envIndex&quot;</span></span>
+<span id="cb35-6"><a href="#cb35-6" tabindex="-1"></a>ei<span class="sc">$</span>envIndex <span class="ot">&lt;-</span> ei<span class="sc">$</span>envIndex <span class="sc">-</span> <span class="fu">mean</span>(ei<span class="sc">$</span>envIndex,<span class="at">na.rm=</span><span class="cn">TRUE</span>) <span class="co"># center the envIndex to have clean VCs</span></span>
+<span id="cb35-7"><a href="#cb35-7" tabindex="-1"></a>ei <span class="ot">&lt;-</span> ei[<span class="fu">with</span>(ei, <span class="fu">order</span>(envIndex)), ]</span>
+<span id="cb35-8"><a href="#cb35-8" tabindex="-1"></a><span class="do">## add the environmental index to the original dataset</span></span>
+<span id="cb35-9"><a href="#cb35-9" tabindex="-1"></a>DT2 <span class="ot">&lt;-</span> <span class="fu">merge</span>(DT,ei, <span class="at">by=</span><span class="st">&quot;Env&quot;</span>)</span>
+<span id="cb35-10"><a href="#cb35-10" tabindex="-1"></a>DT2 <span class="ot">&lt;-</span> DT2[<span class="fu">with</span>(DT2, <span class="fu">order</span>(Name)), ]</span>
+<span id="cb35-11"><a href="#cb35-11" tabindex="-1"></a></span>
+<span id="cb35-12"><a href="#cb35-12" tabindex="-1"></a>ansFW <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(y<span class="sc">~</span> Env <span class="sc">+</span> (envIndex <span class="sc">||</span> Name), <span class="at">data=</span>DT2)</span></code></pre></div>
+<pre><code>## Warning in checkConv(attr(opt, &quot;derivs&quot;), opt$par, ctrl = control$checkConv, :
+## Model failed to converge with max|grad| = 0.00203091 (tol = 0.002, component 1)</code></pre>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansFW); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<pre><code>##  Groups   Name        Variance
+##  Name     (Intercept) 2.632643
+##  Name.1   envIndex    0.041216
+##  Residual             7.046535</code></pre>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<pre><code>## [1] 7.046535</code></pre>
+<p>Alternatively, you can also add the covariance between both the main
+effect and the sensitivity</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" tabindex="-1"></a>ansFW2 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(y<span class="sc">~</span> Env <span class="sc">+</span> (envIndex <span class="sc">|</span> Name), <span class="at">data=</span>DT2)</span>
+<span id="cb41-2"><a href="#cb41-2" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansFW2); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<pre><code>##  Groups   Name        Variance Cov  
+##  Name     (Intercept) 2.75579       
+##           envIndex    0.04279  0.343
+##  Residual             7.03681</code></pre>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<pre><code>## [1] 7.036805</code></pre>
+</div>
+</div>
+<div id="factor-analytic-reduced-rank-model" class="section level2">
+<h2>6) Factor analytic (reduced rank) model</h2>
+<p>When the number of environments where genotypes are evaluated is big
+and we want to consider the genetic covariance between environments and
+location-specific variance components we cannot fit an unstructured
+covariance in the model since the number of parameters is too big and
+the matrix can become non-full rank leading to singularities. In those
+cases is suggested a dimensionality reduction technique. Among those the
+factor analytic structures proposed by many research groups (Piepho,
+Smith, Cullis, Thompson, Meyer, etc.) are the way to go. lme4breeding
+has a reduced-rank factor analytic implementation available through the
+rrc() function. Here we show an example of how to fit the model:</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" tabindex="-1"></a><span class="fu">data</span>(DT_h2)</span>
+<span id="cb45-2"><a href="#cb45-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_h2</span>
+<span id="cb45-3"><a href="#cb45-3" tabindex="-1"></a>DT<span class="ot">=</span>DT[<span class="fu">with</span>(DT, <span class="fu">order</span>(Env)), ]</span>
+<span id="cb45-4"><a href="#cb45-4" tabindex="-1"></a></span>
+<span id="cb45-5"><a href="#cb45-5" tabindex="-1"></a><span class="co"># fit diagonal model first to produce H matrix</span></span>
+<span id="cb45-6"><a href="#cb45-6" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">dsc</span>(Env))<span class="sc">$</span>Z</span>
+<span id="cb45-7"><a href="#cb45-7" tabindex="-1"></a>diagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;y ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
+<span id="cb45-8"><a href="#cb45-8" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
+<span id="cb45-9"><a href="#cb45-9" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(diagFormula))</span></code></pre></div>
+<pre><code>## y ~ Env + (0 + CA.2011 + CA.2012 + CA.2013 + FL.2011 + FL.2012 + 
+##     FL.2013 + MI.2011 + MI.2012 + MI.2013 + MO.2011 + MO.2012 + 
+##     MO.2013 + NY.2011 + NY.2012 + NY.2013 || Name)</code></pre>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a>ans1a <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(diagFormula),</span>
+<span id="cb47-2"><a href="#cb47-2" tabindex="-1"></a>                  <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb47-3"><a href="#cb47-3" tabindex="-1"></a>                  <span class="at">data=</span>DT)</span></code></pre></div>
+<pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ans1a); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<pre><code>##  Groups   Name    Variance  
+##  Name     CA.2011 1.7594e+01
+##  Name.1   CA.2012 5.4589e+00
+##  Name.2   CA.2013 7.9867e+00
+##  Name.3   FL.2011 1.4378e+00
+##  Name.4   FL.2012 5.5710e-09
+##  Name.5   FL.2013 1.7613e-01
+##  Name.6   MI.2011 8.3056e+00
+##  Name.7   MI.2012 5.0141e+00
+##  Name.8   MI.2013 1.9452e+01
+##  Name.9   MO.2011 2.5298e-01
+##  Name.10  MO.2012 1.5656e+01
+##  Name.11  MO.2013 1.7901e+00
+##  Name.12  NY.2011 4.3956e+00
+##  Name.13  NY.2012 2.0397e+00
+##  Name.14  NY.2013 8.5124e+00
+##  Residual         4.1736e+00</code></pre>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" tabindex="-1"></a>H0 <span class="ot">&lt;-</span> <span class="fu">ranef</span>(ans1a)<span class="sc">$</span>Name <span class="co"># GxE table</span></span>
+<span id="cb51-2"><a href="#cb51-2" tabindex="-1"></a></span>
+<span id="cb51-3"><a href="#cb51-3" tabindex="-1"></a><span class="co"># reduced rank model</span></span>
+<span id="cb51-4"><a href="#cb51-4" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT,  <span class="fu">dsc</span>(<span class="fu">rrc</span>(Env, <span class="at">H =</span> H0, <span class="at">nPC =</span> <span class="dv">3</span>)) )<span class="sc">$</span>Z</span>
+<span id="cb51-5"><a href="#cb51-5" tabindex="-1"></a>Zd <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">dsc</span>(Env))<span class="sc">$</span>Z</span>
+<span id="cb51-6"><a href="#cb51-6" tabindex="-1"></a>faFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;y ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;| Name) + (0+&quot;</span>,<span class="fu">paste</span>(<span class="fu">colnames</span>(Zd), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
+<span id="cb51-7"><a href="#cb51-7" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
+<span id="cb51-8"><a href="#cb51-8" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(faFormula))</span></code></pre></div>
+<pre><code>## y ~ Env + (0 + PC1 + PC2 + PC3 | Name) + (0 + CA.2011 + CA.2012 + 
+##     CA.2013 + FL.2011 + FL.2012 + FL.2013 + MI.2011 + MI.2012 + 
+##     MI.2013 + MO.2011 + MO.2012 + MO.2013 + NY.2011 + NY.2012 + 
+##     NY.2013 || Name)</code></pre>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" tabindex="-1"></a>ansFA <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(faFormula),</span>
+<span id="cb53-2"><a href="#cb53-2" tabindex="-1"></a>                  <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb53-3"><a href="#cb53-3" tabindex="-1"></a>                  <span class="at">data=</span>DT)</span></code></pre></div>
+<pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansFA); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<pre><code>##  Groups   Name    Variance   Cov          
+##  Name     PC1     4.1016e+00              
+##           PC2     4.1789e+00  1.352       
+##           PC3     5.8003e+00  2.418 -1.411
+##  Name.1   CA.2011 7.9845e+00              
+##  Name.2   CA.2012 0.0000e+00              
+##  Name.3   CA.2013 7.3062e-01              
+##  Name.4   FL.2011 1.1130e+00              
+##  Name.5   FL.2012 7.4207e-10              
+##  Name.6   FL.2013 2.3911e-09              
+##  Name.7   MI.2011 4.5986e+00              
+##  Name.8   MI.2012 2.7527e+00              
+##  Name.9   MI.2013 1.4452e+01              
+##  Name.10  MO.2011 0.0000e+00              
+##  Name.11  MO.2012 1.2246e+01              
+##  Name.12  MO.2013 1.9037e-01              
+##  Name.13  NY.2011 3.8832e+00              
+##  Name.14  NY.2012 2.0276e-01              
+##  Name.15  NY.2013 7.7721e+00              
+##  Residual         4.0236e+00</code></pre>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<pre><code>## [1] 4.0236</code></pre>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" tabindex="-1"></a>loadings<span class="ot">=</span><span class="fu">with</span>(DT, <span class="fu">rrc</span>(Env, <span class="at">nPC =</span> <span class="dv">3</span>, <span class="at">H =</span> H0, <span class="at">returnGamma =</span> T) )<span class="sc">$</span>Gamma</span>
+<span id="cb59-2"><a href="#cb59-2" tabindex="-1"></a>Gint <span class="ot">&lt;-</span> loadings <span class="sc">%*%</span> vc<span class="sc">$</span>Name <span class="sc">%*%</span> <span class="fu">t</span>(loadings)</span>
+<span id="cb59-3"><a href="#cb59-3" tabindex="-1"></a>Gspec <span class="ot">&lt;-</span> <span class="fu">diag</span>( <span class="fu">unlist</span>(<span class="fu">lapply</span>(vc[<span class="dv">2</span><span class="sc">:</span><span class="dv">16</span>], <span class="cf">function</span>(x){x[[<span class="dv">1</span>]]})) )</span>
+<span id="cb59-4"><a href="#cb59-4" tabindex="-1"></a>G <span class="ot">&lt;-</span> Gint <span class="sc">+</span> Gspec</span>
+<span id="cb59-5"><a href="#cb59-5" tabindex="-1"></a><span class="co"># lattice::levelplot(cov2cor(G))</span></span>
+<span id="cb59-6"><a href="#cb59-6" tabindex="-1"></a><span class="co"># colfunc &lt;- colorRampPalette(c(&quot;steelblue4&quot;,&quot;springgreen&quot;,&quot;yellow&quot;))</span></span>
+<span id="cb59-7"><a href="#cb59-7" tabindex="-1"></a><span class="co"># hv &lt;- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)</span></span>
+<span id="cb59-8"><a href="#cb59-8" tabindex="-1"></a></span>
+<span id="cb59-9"><a href="#cb59-9" tabindex="-1"></a>u <span class="ot">&lt;-</span> <span class="fu">ranef</span>(ansFA)<span class="sc">$</span>Name</span>
+<span id="cb59-10"><a href="#cb59-10" tabindex="-1"></a>uInter <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(u[,<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]) <span class="sc">%*%</span> <span class="fu">t</span>(<span class="fu">as.matrix</span>(loadings))</span>
+<span id="cb59-11"><a href="#cb59-11" tabindex="-1"></a>uSpec <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(u[,<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>)])</span>
+<span id="cb59-12"><a href="#cb59-12" tabindex="-1"></a>u <span class="ot">&lt;-</span> uSpec <span class="sc">+</span> uInter</span></code></pre></div>
+<p>As can be seen genotype BLUPs for all environments can be recovered
+by multiplying the loadings (Gamma) by the factor scores. This is a
+parsomonious way to model an unstructured covariance.</p>
+</div>
+<div id="two-stage-analysis" class="section level2">
+<h2>7) Two stage analysis</h2>
+<p>It is common then to fit a first model that accounts for the
+variation of random design elements, e.g., locations, years, blocks, and
+fixed genotype effects to obtain the estimated marginal means (EMMs) or
+best linear unbiased estimators (BLUEs) as adjusted entry means. These
+adjusted entry means are then used as the phenotype or response variable
+in GWAS and genomic prediction studies.</p>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" tabindex="-1"></a><span class="do">##########</span></span>
+<span id="cb60-2"><a href="#cb60-2" tabindex="-1"></a><span class="do">## stage 1</span></span>
+<span id="cb60-3"><a href="#cb60-3" tabindex="-1"></a><span class="do">##########</span></span>
+<span id="cb60-4"><a href="#cb60-4" tabindex="-1"></a><span class="fu">data</span>(DT_h2)</span>
+<span id="cb60-5"><a href="#cb60-5" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_h2</span>
+<span id="cb60-6"><a href="#cb60-6" tabindex="-1"></a><span class="fu">head</span>(DT)</span></code></pre></div>
+<pre><code>##                 Name     Env Loc Year     Block y
+## 1            W8822-3 FL.2012  FL 2012 FL.2012.1 2
+## 2            W8867-7 FL.2012  FL 2012 FL.2012.2 2
+## 3           MSL007-B MO.2011  MO 2011 MO.2011.1 3
+## 4         CO00270-7W FL.2012  FL 2012 FL.2012.2 3
+## 5 Manistee(MSL292-A) FL.2013  FL 2013 FL.2013.2 3
+## 6           MSM246-B FL.2012  FL 2012 FL.2012.2 3</code></pre>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" tabindex="-1"></a>envs <span class="ot">&lt;-</span> <span class="fu">unique</span>(DT<span class="sc">$</span>Env)</span>
+<span id="cb62-2"><a href="#cb62-2" tabindex="-1"></a>vals <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb62-3"><a href="#cb62-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(envs)){</span>
+<span id="cb62-4"><a href="#cb62-4" tabindex="-1"></a>  ans1 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(y<span class="sc">~</span>Name <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Block), <span class="at">data=</span> <span class="fu">droplevels</span>(DT[<span class="fu">which</span>(DT<span class="sc">$</span>Env <span class="sc">==</span> envs[i]),]) )</span>
+<span id="cb62-5"><a href="#cb62-5" tabindex="-1"></a>  b <span class="ot">&lt;-</span> <span class="fu">fixef</span>(ans1) </span>
+<span id="cb62-6"><a href="#cb62-6" tabindex="-1"></a>  b[<span class="dv">2</span><span class="sc">:</span><span class="fu">length</span>(b)] <span class="ot">&lt;-</span> b[<span class="dv">2</span><span class="sc">:</span><span class="fu">length</span>(b)] <span class="sc">+</span> b[<span class="dv">1</span>]</span>
+<span id="cb62-7"><a href="#cb62-7" tabindex="-1"></a>  ids <span class="ot">&lt;-</span> <span class="fu">colnames</span>(<span class="fu">model.matrix</span>(<span class="sc">~</span>Name<span class="dv">-1</span>, <span class="at">data=</span><span class="fu">droplevels</span>(DT[<span class="fu">which</span>(DT<span class="sc">$</span>Env <span class="sc">==</span> envs[i]),]) ))</span>
+<span id="cb62-8"><a href="#cb62-8" tabindex="-1"></a>  ids <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;Name&quot;</span>,<span class="st">&quot;&quot;</span>,ids)</span>
+<span id="cb62-9"><a href="#cb62-9" tabindex="-1"></a>  vals[[i]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Estimate=</span>b , <span class="at">stdError=</span> <span class="fu">diag</span>( <span class="fu">vcov</span>(ans1)), <span class="at">Effect=</span> ids, <span class="at">Env=</span> envs[i])</span>
+<span id="cb62-10"><a href="#cb62-10" tabindex="-1"></a>}</span></code></pre></div>
+<pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)
+## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" tabindex="-1"></a>DT2 <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, vals)</span>
+<span id="cb64-2"><a href="#cb64-2" tabindex="-1"></a></span>
+<span id="cb64-3"><a href="#cb64-3" tabindex="-1"></a><span class="do">##########</span></span>
+<span id="cb64-4"><a href="#cb64-4" tabindex="-1"></a><span class="do">## stage 2</span></span>
+<span id="cb64-5"><a href="#cb64-5" tabindex="-1"></a><span class="do">##########</span></span>
+<span id="cb64-6"><a href="#cb64-6" tabindex="-1"></a>DT2<span class="sc">$</span>w <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>DT2<span class="sc">$</span>stdError</span>
+<span id="cb64-7"><a href="#cb64-7" tabindex="-1"></a>ans2 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Estimate<span class="sc">~</span>Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Effect) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Env<span class="sc">:</span>Effect), <span class="at">weights =</span> w,<span class="at">data=</span>DT2, </span>
+<span id="cb64-8"><a href="#cb64-8" tabindex="-1"></a>                 <span class="at">control =</span> <span class="fu">lmerControl</span>(</span>
+<span id="cb64-9"><a href="#cb64-9" tabindex="-1"></a>                   <span class="co"># optimizer=&quot;bobyqa&quot;,</span></span>
+<span id="cb64-10"><a href="#cb64-10" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nlev =</span> <span class="st">&quot;ignore&quot;</span>,</span>
+<span id="cb64-11"><a href="#cb64-11" tabindex="-1"></a>                   <span class="at">check.nobs.vs.rankZ =</span> <span class="st">&quot;ignore&quot;</span>,</span>
+<span id="cb64-12"><a href="#cb64-12" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nRE=</span><span class="st">&quot;ignore&quot;</span></span>
+<span id="cb64-13"><a href="#cb64-13" tabindex="-1"></a>                 )</span>
+<span id="cb64-14"><a href="#cb64-14" tabindex="-1"></a>                 )</span>
+<span id="cb64-15"><a href="#cb64-15" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ans2); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<pre><code>##  Groups     Name        Variance
+##  Env:Effect (Intercept) 2.91649 
+##  Effect     (Intercept) 1.99225 
+##  Residual               0.72139</code></pre>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<pre><code>## [1] 0.7213944</code></pre>
+</div>
+<div id="literature" class="section level2">
+<h2>Literature</h2>
+<p>Giovanny Covarrubias-Pazaran (2024). lme4breeding: enabling genetic
+evaluation in the age of genomic data. To be submitted to
+Bioinformatics.</p>
+<p>Bates Douglas, Maechler Martin, Bolker Ben, Walker Steve. 2015.
+Fitting Linear Mixed-Effects Models Using lme4. Journal of Statistical
+Software, 67(1), 1-48.</p>
+<p>Bernardo Rex. 2010. Breeding for quantitative traits in plants.
+Second edition. Stemma Press. 390 pp.</p>
+<p>Gilmour et al. 1995. Average Information REML: An efficient algorithm
+for variance parameter estimation in linear mixed models. Biometrics
+51(4):1440-1450.</p>
+<p>Henderson C.R. 1975. Best Linear Unbiased Estimation and Prediction
+under a Selection Model. Biometrics vol. 31(2):423-447.</p>
+<p>Kang et al. 2008. Efficient control of population structure in model
+organism association mapping. Genetics 178:1709-1723.</p>
+<p>Lee, D.-J., Durban, M., and Eilers, P.H.C. (2013). Efficient
+two-dimensional smoothing with P-spline ANOVA mixed models and nested
+bases. Computational Statistics and Data Analysis, 61, 22 - 37.</p>
+<p>Lee et al. 2015. MTG2: An efficient algorithm for multivariate linear
+mixed model analysis based on genomic information. Cold Spring Harbor.
+doi: <a href="http://dx.doi.org/10.1101/027201" class="uri">http://dx.doi.org/10.1101/027201</a>.</p>
+<p>Maier et al. 2015. Joint analysis of psychiatric disorders increases
+accuracy of risk prediction for schizophrenia, bipolar disorder, and
+major depressive disorder. Am J Hum Genet; 96(2):283-294.</p>
+<p>Rodriguez-Alvarez, Maria Xose, et al. Correcting for spatial
+heterogeneity in plant breeding experiments with P-splines. Spatial
+Statistics 23 (2018): 52-71.</p>
+<p>Searle. 1993. Applying the EM algorithm to calculating ML and REML
+estimates of variance components. Paper invited for the 1993 American
+Statistical Association Meeting, San Francisco.</p>
+<p>Yu et al. 2006. A unified mixed-model method for association mapping
+that accounts for multiple levels of relatedness. Genetics
+38:203-208.</p>
+<p>Tunnicliffe W. 1989. On the use of marginal likelihood in time series
+model estimation. JRSS 51(1):15-27.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
