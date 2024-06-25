@@ -8,10 +8,10 @@
 \usage{
 lmebreed(formula, data, family = NULL, REML = TRUE,
            relmat = list(), addmat = list(), control = list(),
-           start = NULL, verbose = FALSE, subset, weights,
+           start = NULL, verbose = TRUE, subset, weights,
            na.action, offset, contrasts = NULL, model = TRUE,
            x = TRUE, dateWarning=TRUE, returnParams=FALSE,
-           rotation=FALSE, ...)
+           rotation=FALSE, coefOutRotation=8, ...)
 }
 \arguments{
   \item{relmat}{an optional named list of relationship matrices (not the inverse). 
@@ -29,6 +29,9 @@ lmebreed(formula, data, family = NULL, REML = TRUE,
   matrices of the model.}
   \item{rotation}{an logical value indicating if you want to compute the eigen decomposition 
   of the relationship matrix to rotate y and X and accelerate the computation. See details.}
+  \item{coefOutRotation}{a numeric value denoting the inter-quantile outlier coefficient to
+  be used in the rotation of the response when using the eigen decomposition to avoid 
+  overshooting.}
   \item{formula}{as in \code{\link[lme4]{lmer}}}
   \item{data}{as in \code{\link[lme4]{lmer}}}
   \item{family}{as in \code{\link[lme4]{glmer}}}
@@ -58,14 +61,28 @@ lmebreed(formula, data, family = NULL, REML = TRUE,
   
   It is important to remember that when you use the \code{relmat} argument you are providing
   the square root of the relationship matrix and to recover the correct BLUPs for those effects
-  you need to use the \code{\link{ranef}} function which internally multiple those BLUPs the 
+  you need to use the \code{\link[lme4]{ranef}} function which internally multiple those BLUPs the 
   square root of the relationship matrix one more time to recover the correct BLUPs.
   
   The argument \code{rotation} applies the eigen decomposition proposed by Lee and Van der Werf in 2016
   and makes the genetic evaluation totally sparse leading to incredible gains in speed compared 
   to the classical approach. Internally, the eigen decomposition UDU' is carried in the relationship 
   matrix. The U matrix is then taken to the n x n level (n being the number of records), and post-multiplied
-  by a matrix of records presence (n x n) using the element-wise multiplication of two matrices (Schur product).
+  by a matrix of records presence (n x n) using the element-wise multiplication of two matrices (Schur product). 
+  By default is not activated since this may not provide the exact same variance components than other software due to
+  numerical reasons. If you would like to obtain the exact same variance components than other software you will
+  have to keep \code{rotation=FALSE}. This will slow down considerably the speed. Normally when the rotation is 
+  activated and variance components differ slightly with other software they will still provide highly similar 
+  estimates at the speed of hundreds or thousands of times faster. Please consider this.
+  
+  When using the optimizer argument inside the \code{\link[lme4]{lmerControl}} keep in mind that the number of iterations is called differently depending on the optimizer. For \code{\link[lme4]{Nelder_Mead}}, bobyqa and \code{\link[lme4]{nlminbwrap}} is called "maxfun" whereas for \code{\link[lme4]{nloptwrap}} is called "maxeval". This should be passed inside a list in the \code{optCtrl} argument. For example:
+  
+\code{lmebreed(... , 
+         control = lmerControl(
+           optimizer="Nelder_Mead",
+           optCtrl=list(maxfun=100)
+         ), ...
+        )}
   
   
   \strong{Example Datasets}
@@ -120,6 +137,9 @@ ansMain <- lmebreed(Yield ~ Env + (1|Name),
                         relmat = list(Name = A ),
                         data=DT)
 vc <- VarCorr(ansMain); print(vc,comp=c("Variance"))
+
+BLUP <- ranef(ansMain, condVar=TRUE)$Name
+SEs <- attr(BLUP, which="postVar")[,,]
 
 }
 \keyword{models}

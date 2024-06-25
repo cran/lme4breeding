@@ -21,44 +21,94 @@
 }
 
 ###
-umat <- function(formula, relmat, data){
+umat <- function(formula, relmat, data, addmat){
   
   if(missing(data)){stop("Please provide the dataset where we can extract find the factor in formula.")}
   if(missing(relmat)){stop("Please provide the relationship matrix where we will apply the eigen decomposition.")}
   if(missing(formula)){stop("Please provide the formula with the factor to do the decomposition on.")}
   if(!inherits(formula, "formula")){stop("Please provide the formula as.formula().")}
+  if(!is.list(relmat)){stop("relmat argument should be a named list of relationship matrices", call. = FALSE)}
   
   idProvided <- all.vars(formula)
-  if(length(idProvided) > 1){stop("Only one factor can be provided in the formula.")}
-  data$record <- NA
-  ids <- as.character(na.omit(unique(data[,idProvided])))
-  for(iId in ids){ # iId<- ids[1]
-    found <- which(data[,idProvided] == iId)
-    data[found,"record"] <- 1:length(found)
+  # if(length(idProvided) > 1){stop("Only one factor can be provided in the formula.")}
+  ## build the layout matrix
+  ZrZrt <- list()
+  for(iProv in idProvided){ # iProv = idProvided[1]
+    data$record <- NA
+    if(iProv %in% colnames(data)){
+      ids <- as.character(na.omit(unique(data[,iProv])))
+      for(iId in ids){ # iId<- ids[1]
+        found <- which(data[,iProv] == iId)
+        data[found,"record"] <- 1:length(found)
+      }
+    }else{ # addmat effect
+      if(iProv %in% names(addmat)){
+        if(is.list(addmat[[iProv]])){ # indirect genetic effects
+          ids <- colnames(addmat[[iProv]][[1]])
+          provMat <- Reduce("+", addmat[[iProv]]) # sum matrices
+        }else{ # regular model with single incidence matrix
+          ids <- colnames(addmat[[iProv]])
+          provMat <- addmat[[iProv]]
+        }
+        for(iId in ids){ # iId<- ids[1]
+          found <- which(provMat[,iId] > 0)
+          data[found,"record"] <- 1:length(found)
+        }
+      }else{
+        stop(paste("Your term", iProv, "is neither in the dataset nor in addmat, please correct."), call. = FALSE)
+      }
+    }
+    data$recordF <- as.factor(data$record)
+    nLev <- length(levels(data$recordF))
+    if(nLev > 1){
+      Zr <- sparse.model.matrix(~recordF-1, data=data)
+    }else{
+      Zr <- Matrix::Matrix(1, ncol=1, nrow=nrow(data))
+    }
+    ZrZrt[[iProv]] <- Zr %*% t(Zr)
   }
-  data$recordF <- as.factor(data$record)
-  nLev <- length(levels(data$recordF))
-  if(nLev > 1){
-    Zr <- sparse.model.matrix(~recordF-1, data=data)
-  }else{
-    Zr <- Matrix::Matrix(1, ncol=1, nrow=nrow(data))
-  }
-  
+  # part0 <- Reduce("+",ZrZrt)
+  # part0[which(part0 > 0)]=1
+  # part0 <- as(rotate(part0), Class = "dgCMatrix")
   # dim(Zr)
-  part0 <- Zr %*% t(Zr)
   # Matrix::image(part0)
-  Z <- sparse.model.matrix(as.formula(paste("~",idProvided,"-1")), data=data)
-  colnames(Z) <- gsub(idProvided,"", colnames(Z))
-  UD <- eigen(relmat)
-  U<-UD$vectors
-  D<-Matrix::Diagonal(x=UD$values)# This will be our new 'relationship-matrix'
-  rownames(D) <- colnames(D) <- rownames(relmat)
-  rownames(U) <- colnames(U) <- rownames(relmat)
-  
-  # part1 <- Z%*%U[colnames(Z),colnames(Z)]%*%t(Z)
-  part1 <- U[as.character(data[,idProvided]), as.character(data[, idProvided])]
-  W0 <- part0 * part1
-  return(list(Utn=t(W0), D=D, U=U, RRt=part0, effect=idProvided))
+  # build the U nxn matrix
+  Ul <- Dl <- Zu <- list()
+  for(iProv in idProvided){
+    if(iProv %in% colnames(data)){
+      Z <- sparse.model.matrix(as.formula(paste("~",iProv,"-1")), data=data)
+      colnames(Z) <- gsub(iProv,"", colnames(Z))
+    }else{
+      if(iProv %in% names(addmat)){
+        if(is.list(addmat[[iProv]])){ # indirect genetic effects
+          Z <- Reduce("+", addmat[[iProv]])
+        }else{ # single model
+          Z <- addmat[[iProv]]
+        }
+      }else{
+        stop(paste("Your term", iProv, "is neither in the dataset nor in addmat, please correct."), call. = FALSE)
+      }
+    }
+    UD <- eigen(relmat[[iProv]])
+    U<-UD$vectors
+    D<-Matrix::Diagonal(x=UD$values)# This will be our new 'relationship-matrix'
+    rownames(D) <- colnames(D) <- rownames(relmat[[iProv]])
+    rownames(U) <- colnames(U) <- rownames(relmat[[iProv]])
+    common <- intersect(colnames(U), colnames(Z))
+    Ul[[iProv]]<-U[common,common]
+    Dl[[iProv]]<-D[common,common]# This will be our new 'relationship-matrix'
+    Zu[[iProv]] <- Z[,common]
+  }
+  UnList <- list()
+  for(iel in 1:length(Zu)){
+    UnList[[iel]] <- ( Zu[[iel]] %*% Ul[[iel]] %*% t(Zu[[iel]]) ) * ZrZrt[[iel]]
+  }
+  Utn <- t(Reduce("+",UnList))
+  # ZuBind <- do.call(cbind, Zu)
+  # UBind <- do.call(Matrix::bdiag, Ul)
+  # part1 <- ZuBind%*%UBind%*%t(ZuBind)
+  # W0 <- part0 * part1
+  return(list(Utn=Utn, D=Dl, U=Ul, RRt=ZrZrt, effect=idProvided))
 }
 ###
 adjBeta <- function(x){
@@ -136,16 +186,27 @@ getMME <- function(object, vc=NULL, recordsToKeep=NULL){
   # vc <- VarCorr(object);
   for(iFac in pnms){ # iFac = pnms[1]
     tn <- which(match(iFac, names(fl)) == asgn)
+    
+    ####
+    vcov <- do.call(Matrix::bdiag, vc[tn]) # var covar matrix
+    LLt <- Matrix::Diagonal( length(unique(object@flist[[iFac]])) ) # digonal for unique number of levels
+    rowsi <- list()
     for(j in 1:length(tn)){ # j=1
       ind <- (object@Gp)[tn[j]:(tn[j]+1L)]
-      rowsi <- ((ind[1]+1L):ind[2])+1
-      LLt <- Matrix::Diagonal(length(rowsi))
-      if(sum(diag(vc[[iFac]])) > 0){
-        Gi[rowsi,rowsi] <- kronecker( LLt , solve( vc[[iFac]] ) )
-      }else{
-        Gi[rowsi,rowsi] <- kronecker( LLt ,  vc[[iFac]]  )
-      }
+      rowsi[[j]] <- ((ind[1]+1L):ind[2])+1
     }
+    Gi[unlist(rowsi),unlist(rowsi)] <- kronecker( LLt , solve( Matrix::nearPD( vcov )$mat ) )
+    ##
+    # for(j in 1:length(tn)){ # j=1
+    #   ind <- (object@Gp)[tn[j]:(tn[j]+1L)]
+    #   rowsi <- ((ind[1]+1L):ind[2])+1
+    #   LLt <- Matrix::Diagonal( length(unique(object@flist[[iFac]])) )
+    #   if(length(diag(vc[[iFac]])) > 0){
+    #     Gi[rowsi,rowsi] <- kronecker( LLt , solve( Matrix::nearPD( vc[[iFac]] )$mat ) )
+    #   }else{
+    #     Gi[rowsi,rowsi] <- kronecker( LLt ,  vc[[iFac]]  )
+    #   }
+    # }
   }
   # incomplete block part of G matrix = I * vc.b
   
@@ -201,7 +262,7 @@ stackTrait <- function(data, traits){
     dataScaled[,iTrait] <- scale(dataScaled[,iTrait])
   }
   columnTypes <- unlist(lapply(data[idvars],class)) 
-  columnTypes <- columnTypes[which(columnTypes %in% c("factor","character","integer"))]
+  columnTypes <- columnTypes[which(columnTypes %in% c("factor","character"))]
   idvars <- intersect(idvars,names(columnTypes))
   data2 <- reshape(data[,c(idvars, traits)], idvar = idvars, varying = traits,
                    timevar = "trait",

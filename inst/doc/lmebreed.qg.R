@@ -78,7 +78,6 @@ DT$malef <- as.factor(DT$male)
 DT$genof <- as.factor(DT$geno)
 # overlay matrix to be added to the addmat argument
 Z <- with(DT, overlay(femalef,malef) )
-Z <- Z[which(!is.na(DT$sugar)),]
 # create inital values for incidence matrix but irrelevant
 # since these will be replaced by admat argument
 fema <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
@@ -137,7 +136,6 @@ ve <- attr(vc, "sc")^2;ve
 # ## rrBLUP
 # M <- tcrossprod(GT)
 # xx <- with(y.trn, redmm(x=line, M=M, nPC=100, returnLam = TRUE))
-# Z <- xx$Z[which(!is.na(y.trn$X1)),]
 # custom <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
 # ansRRBLUP <- lmebreed(X1 ~ (1|custom),
 #                       addmat = list(custom=Z),
@@ -157,11 +155,9 @@ ve <- attr(vc, "sc")^2;ve
 # # Create the incidence matrix for the first random effect
 # Zf <- Matrix::sparse.model.matrix( ~ focal-1, data=DT )
 # colnames(Zf) <- gsub("focal","", colnames(Zf))
-# Zf <- Zf[which(!is.na(DT$trait)),]
 # # Create the incidence matrix for the second random effect
 # Zn <- Matrix::sparse.model.matrix( ~ neighbour-1, data=DT )
 # colnames(Zn) <- gsub("neighbour","", colnames(Zn))
-# Zn <- Zn[which(!is.na(DT$trait)),]
 # # Make inital values for incidence matrix but irrelevant
 # # since these will be replaced by the addmat argument
 # both <- (rep(colnames(Zf), nrow(DT)))[1:nrow(DT)]
@@ -233,8 +229,6 @@ Zs <- with(DT, tps(Row, Col))$All
 rownames(Zs) <- DT$units
 # reduce the matrix to its PCs
 Z = with(DT, redmm(x=units, M=Zs, nPC=100))
-# make sure dimensions will be correct
-Z <- Z[which(!is.na(DT$Yield)),]
 # create dummy variable
 spatial <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
 # fit model

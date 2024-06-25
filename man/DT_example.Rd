@@ -36,6 +36,9 @@ ans1 <- lmebreed(Yield~Env + (1|Name) + (1|Env:Name),
              data=DT)
 vc <- VarCorr(ans1); print(vc,comp=c("Variance"))
 
+BLUP <- ranef(ans1, condVar=TRUE)$Name
+SEs <- attr(BLUP, which="postVar")[,,]
+
 \donttest{
 
 ## Compound simmetry (CS) + Diagonal (DIAG) model
@@ -57,7 +60,7 @@ csdiagFormula <- paste0( "Yield ~ Env",
                         "+(", paste(colnames(Z), collapse = "+"), "|| Name)",
                         "+(0+ ",paste(colnames(Z), collapse = "+"), "|| units)")
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-ansCSDG <- lmebreed(csdiagFormula,
+ansCSDG <- lmebreed(as.formula(csdiagFormula),
                     relmat = list(Name = A ),
                     control = lmerControl(
                       check.nobs.vs.nlev = "ignore",
