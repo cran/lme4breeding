@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2024-06-25" />
+<meta name="date" content="2024-06-26" />
 
 <title>Fitting genotype by environment models in lme4breeding</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Fitting genotype by environment models in
 lme4breeding</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2024-06-25</h4>
+<h4 class="date">2024-06-26</h4>
 
 
 
@@ -416,7 +416,7 @@ assumes no covariance among locations, as if genotypes were independent
 (despite the fact that is the same genotypes). The fixed effect for
 environment plus the location-specific BLUP is used to predict the
 genotype effect in each locations of interest.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">dsc</span>(Env))<span class="sc">$</span>Z</span>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
 <span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>diagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
 <span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(diagFormula))</span></code></pre></div>
@@ -482,7 +482,7 @@ locations. The main drawback is that the model assumes the same variance
 and covariance among locations. The fixed effect for environment plus
 the main effect for BLUP plus genotype-by-environment effect is used to
 predict the genotype effect in each location of interest.</p>
-<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">dsc</span>(Env))<span class="sc">$</span>Z</span>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
 <span id="cb36-2"><a href="#cb36-2" tabindex="-1"></a>csdiagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
 <span id="cb36-3"><a href="#cb36-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
 <span id="cb36-4"><a href="#cb36-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(csdiagFormula))</span></code></pre></div>
@@ -518,7 +518,7 @@ covariance components are zero, and the difficulty in choosing good
 starting values. The fixed effect for environment plus the environment
 specific BLUP (adjusted by covariances) is used to predict the genotype
 effect in each location of interest.</p>
-<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">dsc</span>(Env))<span class="sc">$</span>Z</span>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
 <span id="cb47-2"><a href="#cb47-2" tabindex="-1"></a>usFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;| Name)&quot;</span>)</span>
 <span id="cb47-3"><a href="#cb47-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
 <span id="cb47-4"><a href="#cb47-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(usFormula))</span></code></pre></div>
@@ -550,7 +550,7 @@ will depend on the order of the Legendre polynomial fitted.</p>
 <div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" tabindex="-1"></a><span class="co"># library(orthopolynom)</span></span>
 <span id="cb58-2"><a href="#cb58-2" tabindex="-1"></a><span class="co"># DT$EnvN &lt;- as.numeric(as.factor(DT$Env))</span></span>
 <span id="cb58-3"><a href="#cb58-3" tabindex="-1"></a><span class="co">#  </span></span>
-<span id="cb58-4"><a href="#cb58-4" tabindex="-1"></a><span class="co"># Z &lt;- with(DT, dsc(leg(EnvN,1)) )$Z</span></span>
+<span id="cb58-4"><a href="#cb58-4" tabindex="-1"></a><span class="co"># Z &lt;- with(DT, smm(leg(EnvN,1)) )</span></span>
 <span id="cb58-5"><a href="#cb58-5" tabindex="-1"></a><span class="co"># rrFormula &lt;- paste0( &quot;Yield ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;| Name)&quot;)</span></span>
 <span id="cb58-6"><a href="#cb58-6" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
 <span id="cb58-7"><a href="#cb58-7" tabindex="-1"></a><span class="co"># ansRR &lt;- lmebreed(as.formula(rrFormula),</span></span>
@@ -561,7 +561,7 @@ will depend on the order of the Legendre polynomial fitted.</p>
 <p>In addition, we an fit this without covariance:</p>
 <div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" tabindex="-1"></a><span class="co"># library(orthopolynom)</span></span>
 <span id="cb59-2"><a href="#cb59-2" tabindex="-1"></a><span class="co"># DT$EnvN &lt;- as.numeric(as.factor(DT$Env))</span></span>
-<span id="cb59-3"><a href="#cb59-3" tabindex="-1"></a><span class="co">#  Z &lt;- with(DT, dsc(leg(EnvN,1)) )$Z</span></span>
+<span id="cb59-3"><a href="#cb59-3" tabindex="-1"></a><span class="co">#  Z &lt;- with(DT, smm(leg(EnvN,1)) )</span></span>
 <span id="cb59-4"><a href="#cb59-4" tabindex="-1"></a><span class="co"># rrFormula &lt;- paste0( &quot;Yield ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;|| Name)&quot;)</span></span>
 <span id="cb59-5"><a href="#cb59-5" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
 <span id="cb59-6"><a href="#cb59-6" tabindex="-1"></a><span class="co"># ansRR &lt;- lmebreed(as.formula(rrFormula),</span></span>
@@ -615,13 +615,13 @@ cases is suggested a dimensionality reduction technique. Among those the
 factor analytic structures proposed by many research groups (Piepho,
 Smith, Cullis, Thompson, Meyer, etc.) are the way to go. lme4breeding
 has a reduced-rank factor analytic implementation available through the
-rrc() function. Here we show an example of how to fit the model:</p>
+rrm() function. Here we show an example of how to fit the model:</p>
 <div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" tabindex="-1"></a><span class="co"># data(DT_h2)</span></span>
 <span id="cb70-2"><a href="#cb70-2" tabindex="-1"></a><span class="co"># DT &lt;- DT_h2</span></span>
 <span id="cb70-3"><a href="#cb70-3" tabindex="-1"></a><span class="co"># DT=DT[with(DT, order(Env)), ]</span></span>
 <span id="cb70-4"><a href="#cb70-4" tabindex="-1"></a><span class="co"># </span></span>
 <span id="cb70-5"><a href="#cb70-5" tabindex="-1"></a><span class="co"># # fit diagonal model first to produce H matrix</span></span>
-<span id="cb70-6"><a href="#cb70-6" tabindex="-1"></a><span class="co"># Z &lt;- with(DT, dsc(Env))$Z</span></span>
+<span id="cb70-6"><a href="#cb70-6" tabindex="-1"></a><span class="co"># Z &lt;- with(DT, smm(Env))</span></span>
 <span id="cb70-7"><a href="#cb70-7" tabindex="-1"></a><span class="co"># diagFormula &lt;- paste0( &quot;y ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;|| Name)&quot;)</span></span>
 <span id="cb70-8"><a href="#cb70-8" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
 <span id="cb70-9"><a href="#cb70-9" tabindex="-1"></a><span class="co"># print(as.formula(diagFormula))</span></span>
@@ -631,8 +631,8 @@ rrc() function. Here we show an example of how to fit the model:</p>
 <span id="cb70-13"><a href="#cb70-13" tabindex="-1"></a><span class="co"># H0 &lt;- ranef(ans1a)$Name # GxE table</span></span>
 <span id="cb70-14"><a href="#cb70-14" tabindex="-1"></a><span class="co"># </span></span>
 <span id="cb70-15"><a href="#cb70-15" tabindex="-1"></a><span class="co"># # reduced rank model</span></span>
-<span id="cb70-16"><a href="#cb70-16" tabindex="-1"></a><span class="co"># Z &lt;- with(DT,  dsc(rrc(Env, H = H0, nPC = 3)) )$Z</span></span>
-<span id="cb70-17"><a href="#cb70-17" tabindex="-1"></a><span class="co"># Zd &lt;- with(DT, dsc(Env))$Z</span></span>
+<span id="cb70-16"><a href="#cb70-16" tabindex="-1"></a><span class="co"># Z &lt;- with(DT,  rrm(Env, H = H0, nPC = 3)) </span></span>
+<span id="cb70-17"><a href="#cb70-17" tabindex="-1"></a><span class="co"># Zd &lt;- with(DT, smm(Env))</span></span>
 <span id="cb70-18"><a href="#cb70-18" tabindex="-1"></a><span class="co"># faFormula &lt;- paste0( &quot;y ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;| Name) + (0+&quot;,paste(colnames(Zd), collapse = &quot;+&quot;), &quot;|| Name)&quot;)</span></span>
 <span id="cb70-19"><a href="#cb70-19" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
 <span id="cb70-20"><a href="#cb70-20" tabindex="-1"></a><span class="co"># print(as.formula(faFormula))</span></span>
@@ -641,7 +641,7 @@ rrc() function. Here we show an example of how to fit the model:</p>
 <span id="cb70-23"><a href="#cb70-23" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ansFA); print(vc,comp=c(&quot;Variance&quot;))</span></span>
 <span id="cb70-24"><a href="#cb70-24" tabindex="-1"></a><span class="co"># ve &lt;- attr(vc, &quot;sc&quot;)^2; ve</span></span>
 <span id="cb70-25"><a href="#cb70-25" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb70-26"><a href="#cb70-26" tabindex="-1"></a><span class="co"># loadings=with(DT, rrc(Env, nPC = 3, H = H0, returnGamma = T) )$Gamma</span></span>
+<span id="cb70-26"><a href="#cb70-26" tabindex="-1"></a><span class="co"># loadings=with(DT, rrm(Env, nPC = 3, H = H0, returnGamma = T) )$Gamma</span></span>
 <span id="cb70-27"><a href="#cb70-27" tabindex="-1"></a><span class="co"># Gint &lt;- loadings %*% vc$Name %*% t(loadings)</span></span>
 <span id="cb70-28"><a href="#cb70-28" tabindex="-1"></a><span class="co"># Gspec &lt;- diag( unlist(lapply(vc[2:16], function(x){x[[1]]})) )</span></span>
 <span id="cb70-29"><a href="#cb70-29" tabindex="-1"></a><span class="co"># G &lt;- Gint + Gspec</span></span>

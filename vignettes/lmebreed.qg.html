@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2024-06-25" />
+<meta name="date" content="2024-06-26" />
 
 <title>Quantitative genetics using the lme4breeding package</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Quantitative genetics using the
 lme4breeding package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2024-06-25</h4>
+<h4 class="date">2024-06-26</h4>
 
 
 
@@ -511,7 +511,7 @@ variance is the way to go.</p>
 ## 68           MSR169-8Y CA.2013  CA 2013 CA.2013.1     5 -1.469051
 ## 103         AC05153-1W CA.2013  CA 2013 CA.2013.1     6 -1.307167</code></pre>
 <div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="do">## Compound simmetry (CS) + Diagonal (DIAG) model</span></span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">dsc</span>(Env))<span class="sc">$</span>Z</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
 <span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>csdiagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
 <span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
 <span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>ansCSDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(csdiagFormula),</span>

@@ -12,7 +12,7 @@ vc <- VarCorr(ansMain); print(vc,comp=c("Variance"))
 
 ## -----------------------------------------------------------------------------
 
-Z <- with(DT, dsc(Env))$Z
+Z <- with(DT, smm(Env))
 diagFormula <- paste0( "Yield ~ Env + (0+", paste(colnames(Z), collapse = "+"), "|| Name)")
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 print(as.formula(diagFormula))
@@ -36,7 +36,7 @@ vc <- VarCorr(ansCS); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2; ve
 
 ## -----------------------------------------------------------------------------
-Z <- with(DT, dsc(Env))$Z
+Z <- with(DT, smm(Env))
 csdiagFormula <- paste0( "Yield ~ Env + (", paste(colnames(Z), collapse = "+"), "|| Name)")
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 print(as.formula(csdiagFormula))
@@ -48,7 +48,7 @@ ve <- attr(vc, "sc")^2; ve
 
 ## -----------------------------------------------------------------------------
 
-Z <- with(DT, dsc(Env))$Z
+Z <- with(DT, smm(Env))
 usFormula <- paste0( "Yield ~ Env + (0+", paste(colnames(Z), collapse = "+"), "| Name)")
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 print(as.formula(usFormula))
@@ -64,7 +64,7 @@ ve <- attr(vc, "sc")^2; ve
 # library(orthopolynom)
 # DT$EnvN <- as.numeric(as.factor(DT$Env))
 #  
-# Z <- with(DT, dsc(leg(EnvN,1)) )$Z
+# Z <- with(DT, smm(leg(EnvN,1)) )
 # rrFormula <- paste0( "Yield ~ Env + (0+", paste(colnames(Z), collapse = "+"), "| Name)")
 # for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 # ansRR <- lmebreed(as.formula(rrFormula),
@@ -77,7 +77,7 @@ ve <- attr(vc, "sc")^2; ve
 ## -----------------------------------------------------------------------------
 # library(orthopolynom)
 # DT$EnvN <- as.numeric(as.factor(DT$Env))
-#  Z <- with(DT, dsc(leg(EnvN,1)) )$Z
+#  Z <- with(DT, smm(leg(EnvN,1)) )
 # rrFormula <- paste0( "Yield ~ Env + (0+", paste(colnames(Z), collapse = "+"), "|| Name)")
 # for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 # ansRR <- lmebreed(as.formula(rrFormula),
@@ -119,7 +119,7 @@ ve <- attr(vc, "sc")^2; ve
 # DT=DT[with(DT, order(Env)), ]
 # 
 # # fit diagonal model first to produce H matrix
-# Z <- with(DT, dsc(Env))$Z
+# Z <- with(DT, smm(Env))
 # diagFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"), "|| Name)")
 # for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 # print(as.formula(diagFormula))
@@ -129,8 +129,8 @@ ve <- attr(vc, "sc")^2; ve
 # H0 <- ranef(ans1a)$Name # GxE table
 # 
 # # reduced rank model
-# Z <- with(DT,  dsc(rrc(Env, H = H0, nPC = 3)) )$Z
-# Zd <- with(DT, dsc(Env))$Z
+# Z <- with(DT,  rrm(Env, H = H0, nPC = 3)) 
+# Zd <- with(DT, smm(Env))
 # faFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"), "| Name) + (0+",paste(colnames(Zd), collapse = "+"), "|| Name)")
 # for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 # print(as.formula(faFormula))
@@ -139,7 +139,7 @@ ve <- attr(vc, "sc")^2; ve
 # vc <- VarCorr(ansFA); print(vc,comp=c("Variance"))
 # ve <- attr(vc, "sc")^2; ve
 # 
-# loadings=with(DT, rrc(Env, nPC = 3, H = H0, returnGamma = T) )$Gamma
+# loadings=with(DT, rrm(Env, nPC = 3, H = H0, returnGamma = T) )$Gamma
 # Gint <- loadings %*% vc$Name %*% t(loadings)
 # Gspec <- diag( unlist(lapply(vc[2:16], function(x){x[[1]]})) )
 # G <- Gint + Gspec
