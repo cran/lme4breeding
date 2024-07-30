@@ -58,6 +58,10 @@ umat <- function(formula, relmat, data, addmat){
         stop(paste("Your term", iProv, "is neither in the dataset nor in addmat, please correct."), call. = FALSE)
       }
     }
+    tabRec <- table(data$record)
+    if(length(tabRec) > 1){
+      if( var(tabRec) > 0 ){stop("The eigen decomposition only works for balanced datasets. Please set to FALSE.", call. = FALSE)}
+    }
     data$recordF <- as.factor(data$record)
     nLev <- length(levels(data$recordF))
     if(nLev > 1){
@@ -484,7 +488,7 @@ imputev <- function (x, method = "median") {
   return(x)
 }
 
-rrm <- function(x=NULL, H=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE, sep=""){
+rrm <- function(x=NULL, H=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE){
   if(is.null(x) ){stop("Please provide the x argument.", call. = FALSE)}
   if(is.null(H) ){stop("Please provide the x argument.", call. = FALSE)}
   # these are called PC models by Meyer 2009, GSE. This is a reduced rank implementation
@@ -492,7 +496,6 @@ rrm <- function(x=NULL, H=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE, sep=""){
   
   Y <- apply(H,2, imputev)
   Sigma <- cov(scale(Y, scale = TRUE, center = TRUE)) # surrogate of unstructured matrix to start with
-  Sigma[which(is.na(Sigma), arr.ind = TRUE)]=0
   Sigma <- as.matrix(nearPD(Sigma)$mat)
   # GE <- as.data.frame(t(scale( t(scale(Y, center=T,scale=F)), center=T, scale=F)))  # sum(GE^2)
   if(cholD){
@@ -512,7 +515,7 @@ rrm <- function(x=NULL, H=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE, sep=""){
   rownames(Gamma) <- rownamesGamma
   ##
   rownames(Gamma) <- gsub("v.names_","",rownames(Gamma))#rownames(GE)#levels(dataset$Genotype);  # rownames(Se) <- colnames(GE)#levels(dataset$Environment)
-  colnames(Gamma) <- paste("PC", 1:ncol(Gamma), sep =sep); # 
+  colnames(Gamma) <- paste("PC", 1:ncol(Gamma), sep =""); # 
   ######### GEreduced = Sg %*% t(Se) 
   # if we want to merge with PCs for environments
   dtx <- data.frame(timevar=x)

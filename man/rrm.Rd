@@ -5,7 +5,7 @@
   \code{rrm} creates a reduced rank factor analytic matrix by selecting the n vectors of the L matrix of the Cholesky decomposition or the U vectors of the SVD decomposition (loadings or latent covariates) to create a new incidence matrix of latent covariates that can be used with the \code{\link{lmebreed}} solver to fit random regressions on the latent covariates.
 }
 \usage{
-  rrm(x=NULL, H=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE, sep="")
+  rrm(x=NULL, H=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE)
 }
 
 \arguments{
@@ -14,7 +14,6 @@
   \item{nPC}{number of principal components to keep from the loadings matrix.}
   \item{returnGamma}{a TRUE/FALSE argument specifying if the function should return the matrix of loadings used to build the incidence matrix for the model. The default is FALSE so it returns only the incidence matrix.}
   \item{cholD}{a TRUE/FALSE argument specifying if the Cholesky decomposition should be calculated or the singular value decomposition should be used instead.}
-  \item{sep}{a character value to separate the names of PCs.}
   
 }
 \details{
@@ -90,7 +89,6 @@ Douglas Bates, Martin Maechler, Ben Bolker, Steve Walker (2015). Fitting Linear 
 data(DT_h2)
 DT <- DT_h2
 DT=DT[with(DT, order(Env)), ]
-head(DT)
 indNames <- na.omit(unique(DT$Name))
 A <- diag(length(indNames))
 rownames(A) <- colnames(A) <- indNames
@@ -99,38 +97,40 @@ rownames(A) <- colnames(A) <- indNames
   
 # fit diagonal model first to produce H matrix
 Z <- with(DT, smm(Env))
-diagFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"), "|| Name)")
+diagFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"), 
+                       "|| Name)")
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
+print(as.formula(diagFormula))
 ans1a <- lmebreed(as.formula(diagFormula),
-                  relmat = list(Name = A ),
+                  relmat = list(Name=A),
                   data=DT)
 vc <- VarCorr(ans1a); print(vc,comp=c("Variance"))
 H0 <- ranef(ans1a)$Name # GxE table
 
 # reduced rank model
-Z <- with(DT,  rrm(Env, H = H0, nPC = 3) ) 
-Zd <- with(DT, smm(Env) )
+Z <- with(DT,  rrm(Env, H = H0, nPC = 3))
+Zd <- with(DT, smm(Env))
 faFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"),
-                     "| Name) + (0+",paste(colnames(Zd), collapse = "+"), "|| Name)")
+                     "| Name) + (0+",paste(colnames(Zd), collapse = "+"), 
+                     "|| Name)")
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
+print(as.formula(faFormula))
 ansFA <- lmebreed(as.formula(faFormula),
-                  relmat = list(Name = A ),
+                  relmat = list(Name=A),
                   data=DT)
 vc <- VarCorr(ansFA); print(vc,comp=c("Variance"))
-  
-}
-\dontrun{
+ve <- attr(vc, "sc")^2; ve
 
 loadings=with(DT, rrm(Env, nPC = 3, H = H0, returnGamma = TRUE) )$Gamma
-Gint <- loadings %*% vc$Name %*% t(loadings) ## replace * by matrix product
+Gint <- loadings \%*\% vc$Name \%*\% t(loadings)
 Gspec <- diag( unlist(lapply(vc[2:16], function(x){x[[1]]})) )
 G <- Gint + Gspec
-## lattice::levelplot(cov2cor(G))
-colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
-hv <- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)
+# lattice::levelplot(cov2cor(G))
+# colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
+# hv <- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)
 
 u <- ranef(ansFA)$Name
-uInter <- as.matrix(u[,1:3]) %*% t(as.matrix(loadings)) ## replace * by matrix product
+uInter <- as.matrix(u[,1:3]) \%*\% t(as.matrix(loadings))
 uSpec <- as.matrix(u[,-c(1:3)])
 u <- uSpec + uInter
   
