@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2024-07-30" />
+<meta name="date" content="2024-08-18" />
 
 <title>Fitting genotype by environment models in lme4breeding</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Fitting genotype by environment models in
 lme4breeding</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2024-07-30</h4>
+<h4 class="date">2024-08-18</h4>
 
 
 
@@ -377,24 +377,14 @@ program can afford more than one location. The main effect model assumes
 that GxE doesn’t exist and that the main genotype effect plus the fixed
 effect for environment is enough to predict the genotype effect in all
 locations of interest.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(lme4breeding)</span></code></pre></div>
-<pre><code>## Loading required package: lme4</code></pre>
-<pre><code>## Warning: package &#39;lme4&#39; was built under R version 4.2.3</code></pre>
-<pre><code>## Loading required package: Matrix</code></pre>
-<pre><code>## Warning: package &#39;Matrix&#39; was built under R version 4.2.3</code></pre>
-<pre><code>## Loading required package: crayon</code></pre>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">data</span>(DT_example)</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_example</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>A <span class="ot">&lt;-</span> A_example</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>ansMain <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield <span class="sc">~</span> Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Name),</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>                        <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>                        <span class="at">data=</span>DT)</span></code></pre></div>
-<pre><code>## * Cholesky decomposition finished.</code></pre>
-<pre><code>## * Relfactors (relmat) applied to Z</code></pre>
-<pre><code>## * Optimizing ...</code></pre>
-<pre><code>## * Done!!</code></pre>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansMain); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">data</span>(DT_example)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_example</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>A <span class="ot">&lt;-</span> A_example</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>ansMain <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield <span class="sc">~</span> Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Name),</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>                        <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>                        <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">data=</span>DT)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansMain); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
 ##  Name     (Intercept) 4.8559  
 ##  Residual             8.1086</code></pre>
@@ -416,25 +406,21 @@ assumes no covariance among locations, as if genotypes were independent
 (despite the fact that is the same genotypes). The fixed effect for
 environment plus the location-specific BLUP is used to predict the
 genotype effect in each locations of interest.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>diagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(diagFormula))</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>diagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(diagFormula))</span></code></pre></div>
 <pre><code>## Yield ~ Env + (0 + CA.2011 + CA.2012 + CA.2013 || Name)</code></pre>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>ansDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(diagFormula),</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>                      <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>                      <span class="at">data=</span>DT)</span></code></pre></div>
-<pre><code>## * Cholesky decomposition finished.</code></pre>
-<pre><code>## * Relfactors (relmat) applied to Z</code></pre>
-<pre><code>## * Optimizing ...</code></pre>
-<pre><code>## * Done!!</code></pre>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansDG); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>ansDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(diagFormula),</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>                      <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>                      <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">data=</span>DT)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansDG); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name    Variance
 ##  Name     CA.2011 17.4934 
 ##  Name.1   CA.2012  5.3376 
 ##  Name.2   CA.2013  7.8839 
 ##  Residual          4.3806</code></pre>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
 <pre><code>## [1] 4.380609</code></pre>
 </div>
 <div id="met-compund-symmetry-model-cs" class="section level2">
@@ -448,28 +434,24 @@ locations. The main drawback is that the model assumes the same variance
 and covariance among locations. The fixed effect for environment plus
 the main effect for BLUP plus genotype-by-environment effect is used to
 predict the genotype effect in each location of interest.</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a>DT<span class="sc">$</span>EnvName <span class="ot">&lt;-</span> <span class="fu">paste</span>(DT<span class="sc">$</span>Env, DT<span class="sc">$</span>Name, <span class="at">sep =</span> <span class="st">&quot;:&quot;</span>)</span>
-<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>E <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">Diagonal</span>(<span class="fu">length</span>(<span class="fu">unique</span>(DT<span class="sc">$</span>Env)));</span>
-<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a><span class="fu">colnames</span>(E) <span class="ot">&lt;-</span> <span class="fu">rownames</span>(E) <span class="ot">&lt;-</span> <span class="fu">unique</span>(DT<span class="sc">$</span>Env);E</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>DT<span class="sc">$</span>EnvName <span class="ot">&lt;-</span> <span class="fu">paste</span>(DT<span class="sc">$</span>Env, DT<span class="sc">$</span>Name, <span class="at">sep =</span> <span class="st">&quot;:&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>E <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">Diagonal</span>(<span class="fu">length</span>(<span class="fu">unique</span>(DT<span class="sc">$</span>Env)));</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">colnames</span>(E) <span class="ot">&lt;-</span> <span class="fu">rownames</span>(E) <span class="ot">&lt;-</span> <span class="fu">unique</span>(DT<span class="sc">$</span>Env);E</span></code></pre></div>
 <pre><code>## 3 x 3 diagonal matrix of class &quot;ddiMatrix&quot;
 ##         CA.2013 CA.2011 CA.2012
 ## CA.2013       1       .       .
 ## CA.2011       .       1       .
 ## CA.2012       .       .       1</code></pre>
-<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a>EA <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">kronecker</span>(E,A, <span class="at">make.dimnames =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>ansCS <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield <span class="sc">~</span> Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Name) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>EnvName),</span>
-<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a>                    <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A, <span class="at">EnvName=</span>  EA ),</span>
-<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a>                    <span class="at">data=</span>DT)</span></code></pre></div>
-<pre><code>## * Cholesky decomposition finished.</code></pre>
-<pre><code>## * Relfactors (relmat) applied to Z</code></pre>
-<pre><code>## * Optimizing ...</code></pre>
-<pre><code>## * Done!!</code></pre>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansCS); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>EA <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">kronecker</span>(E,A, <span class="at">make.dimnames =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>ansCS <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield <span class="sc">~</span> Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Name) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>EnvName),</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>                    <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A, <span class="at">EnvName=</span>  EA ),</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>                    <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">data=</span>DT)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansCS); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
 ##  EnvName  (Intercept) 5.1732  
 ##  Name     (Intercept) 3.6819  
 ##  Residual             4.3662</code></pre>
-<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
 <pre><code>## [1] 4.366211</code></pre>
 <div id="met-compund-symmetry-model-diagonal-csdg" class="section level3">
 <h3>3.2) MET: compund symmetry model + diagonal (CS+DG)</h3>
@@ -482,26 +464,22 @@ locations. The main drawback is that the model assumes the same variance
 and covariance among locations. The fixed effect for environment plus
 the main effect for BLUP plus genotype-by-environment effect is used to
 predict the genotype effect in each location of interest.</p>
-<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
-<span id="cb36-2"><a href="#cb36-2" tabindex="-1"></a>csdiagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
-<span id="cb36-3"><a href="#cb36-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
-<span id="cb36-4"><a href="#cb36-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(csdiagFormula))</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>csdiagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(csdiagFormula))</span></code></pre></div>
 <pre><code>## Yield ~ Env + (CA.2011 + CA.2012 + CA.2013 || Name)</code></pre>
-<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a>ansCSDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(csdiagFormula),</span>
-<span id="cb38-2"><a href="#cb38-2" tabindex="-1"></a>                      <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
-<span id="cb38-3"><a href="#cb38-3" tabindex="-1"></a>                      <span class="at">data=</span>DT)</span></code></pre></div>
-<pre><code>## * Cholesky decomposition finished.</code></pre>
-<pre><code>## * Relfactors (relmat) applied to Z</code></pre>
-<pre><code>## * Optimizing ...</code></pre>
-<pre><code>## * Done!!</code></pre>
-<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansCSDG); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>ansCSDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(csdiagFormula),</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>                      <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>                      <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">data=</span>DT)</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansCSDG); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
 ##  Name     (Intercept)  2.9637 
 ##  Name.1   CA.2011     10.4264 
 ##  Name.2   CA.2012      2.6589 
 ##  Name.3   CA.2013      5.7017 
 ##  Residual              4.3976</code></pre>
-<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
 <pre><code>## [1] 4.397594</code></pre>
 </div>
 </div>
@@ -518,25 +496,21 @@ covariance components are zero, and the difficulty in choosing good
 starting values. The fixed effect for environment plus the environment
 specific BLUP (adjusted by covariances) is used to predict the genotype
 effect in each location of interest.</p>
-<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
-<span id="cb47-2"><a href="#cb47-2" tabindex="-1"></a>usFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;| Name)&quot;</span>)</span>
-<span id="cb47-3"><a href="#cb47-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
-<span id="cb47-4"><a href="#cb47-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(usFormula))</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>usFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;Yield ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;| Name)&quot;</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">as.formula</span>(usFormula))</span></code></pre></div>
 <pre><code>## Yield ~ Env + (0 + CA.2011 + CA.2012 + CA.2013 | Name)</code></pre>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" tabindex="-1"></a>ansDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(usFormula),</span>
-<span id="cb49-2"><a href="#cb49-2" tabindex="-1"></a>                    <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
-<span id="cb49-3"><a href="#cb49-3" tabindex="-1"></a>                    <span class="at">data=</span>DT)</span></code></pre></div>
-<pre><code>## * Cholesky decomposition finished.</code></pre>
-<pre><code>## * Relfactors (relmat) applied to Z</code></pre>
-<pre><code>## * Optimizing ...</code></pre>
-<pre><code>## * Done!!</code></pre>
-<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansDG); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>ansDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(usFormula),</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>                    <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>                    <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">data=</span>DT)</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansDG); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name    Variance Cov          
 ##  Name     CA.2011 15.9930               
 ##           CA.2012  5.2743   6.172       
 ##           CA.2013  7.6897   6.366  0.375
 ##  Residual          4.3862</code></pre>
-<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
 <pre><code>## [1] 4.38618</code></pre>
 </div>
 <div id="met-random-regression-model" class="section level2">
@@ -547,60 +521,60 @@ assumes that the environment can be seen as a continuous variable and
 therefore a variance component for the intercept and a variance
 component for the slope can be fitted. The number of variance components
 will depend on the order of the Legendre polynomial fitted.</p>
-<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" tabindex="-1"></a><span class="co"># library(orthopolynom)</span></span>
-<span id="cb58-2"><a href="#cb58-2" tabindex="-1"></a><span class="co"># DT$EnvN &lt;- as.numeric(as.factor(DT$Env))</span></span>
-<span id="cb58-3"><a href="#cb58-3" tabindex="-1"></a><span class="co">#  </span></span>
-<span id="cb58-4"><a href="#cb58-4" tabindex="-1"></a><span class="co"># Z &lt;- with(DT, smm(leg(EnvN,1)) )</span></span>
-<span id="cb58-5"><a href="#cb58-5" tabindex="-1"></a><span class="co"># rrFormula &lt;- paste0( &quot;Yield ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;| Name)&quot;)</span></span>
-<span id="cb58-6"><a href="#cb58-6" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
-<span id="cb58-7"><a href="#cb58-7" tabindex="-1"></a><span class="co"># ansRR &lt;- lmebreed(as.formula(rrFormula),</span></span>
-<span id="cb58-8"><a href="#cb58-8" tabindex="-1"></a><span class="co">#                   relmat = list(Name = A ),</span></span>
-<span id="cb58-9"><a href="#cb58-9" tabindex="-1"></a><span class="co">#                   data=DT)</span></span>
-<span id="cb58-10"><a href="#cb58-10" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ansRR); print(vc,comp=c(&quot;Variance&quot;))</span></span>
-<span id="cb58-11"><a href="#cb58-11" tabindex="-1"></a><span class="co"># ve &lt;- attr(vc, &quot;sc&quot;)^2; ve</span></span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="co"># library(orthopolynom)</span></span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a><span class="co"># DT$EnvN &lt;- as.numeric(as.factor(DT$Env))</span></span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a><span class="co">#  </span></span>
+<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a><span class="co"># Z &lt;- with(DT, smm(leg(EnvN,1)) )</span></span>
+<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a><span class="co"># rrFormula &lt;- paste0( &quot;Yield ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;| Name)&quot;)</span></span>
+<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
+<span id="cb27-7"><a href="#cb27-7" tabindex="-1"></a><span class="co"># ansRR &lt;- lmebreed(as.formula(rrFormula),</span></span>
+<span id="cb27-8"><a href="#cb27-8" tabindex="-1"></a><span class="co">#                   relmat = list(Name = A ),</span></span>
+<span id="cb27-9"><a href="#cb27-9" tabindex="-1"></a><span class="co">#                   data=DT)</span></span>
+<span id="cb27-10"><a href="#cb27-10" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ansRR); print(vc,comp=c(&quot;Variance&quot;))</span></span>
+<span id="cb27-11"><a href="#cb27-11" tabindex="-1"></a><span class="co"># ve &lt;- attr(vc, &quot;sc&quot;)^2; ve</span></span></code></pre></div>
 <p>In addition, we an fit this without covariance:</p>
-<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" tabindex="-1"></a><span class="co"># library(orthopolynom)</span></span>
-<span id="cb59-2"><a href="#cb59-2" tabindex="-1"></a><span class="co"># DT$EnvN &lt;- as.numeric(as.factor(DT$Env))</span></span>
-<span id="cb59-3"><a href="#cb59-3" tabindex="-1"></a><span class="co">#  Z &lt;- with(DT, smm(leg(EnvN,1)) )</span></span>
-<span id="cb59-4"><a href="#cb59-4" tabindex="-1"></a><span class="co"># rrFormula &lt;- paste0( &quot;Yield ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;|| Name)&quot;)</span></span>
-<span id="cb59-5"><a href="#cb59-5" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
-<span id="cb59-6"><a href="#cb59-6" tabindex="-1"></a><span class="co"># ansRR &lt;- lmebreed(as.formula(rrFormula),</span></span>
-<span id="cb59-7"><a href="#cb59-7" tabindex="-1"></a><span class="co">#                   relmat = list(Name = A ),</span></span>
-<span id="cb59-8"><a href="#cb59-8" tabindex="-1"></a><span class="co">#                   data=DT)</span></span>
-<span id="cb59-9"><a href="#cb59-9" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ansRR); print(vc,comp=c(&quot;Variance&quot;))</span></span>
-<span id="cb59-10"><a href="#cb59-10" tabindex="-1"></a><span class="co"># ve &lt;- attr(vc, &quot;sc&quot;)^2; ve</span></span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="co"># library(orthopolynom)</span></span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a><span class="co"># DT$EnvN &lt;- as.numeric(as.factor(DT$Env))</span></span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a><span class="co">#  Z &lt;- with(DT, smm(leg(EnvN,1)) )</span></span>
+<span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a><span class="co"># rrFormula &lt;- paste0( &quot;Yield ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;|| Name)&quot;)</span></span>
+<span id="cb28-5"><a href="#cb28-5" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
+<span id="cb28-6"><a href="#cb28-6" tabindex="-1"></a><span class="co"># ansRR &lt;- lmebreed(as.formula(rrFormula),</span></span>
+<span id="cb28-7"><a href="#cb28-7" tabindex="-1"></a><span class="co">#                   relmat = list(Name = A ),</span></span>
+<span id="cb28-8"><a href="#cb28-8" tabindex="-1"></a><span class="co">#                   data=DT)</span></span>
+<span id="cb28-9"><a href="#cb28-9" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ansRR); print(vc,comp=c(&quot;Variance&quot;))</span></span>
+<span id="cb28-10"><a href="#cb28-10" tabindex="-1"></a><span class="co"># ve &lt;- attr(vc, &quot;sc&quot;)^2; ve</span></span></code></pre></div>
 <div id="finlay-wilkinson-regression" class="section level3">
 <h3>5.2) Finlay-Wilkinson regression</h3>
-<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" tabindex="-1"></a><span class="fu">data</span>(DT_h2)</span>
-<span id="cb60-2"><a href="#cb60-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_h2</span>
-<span id="cb60-3"><a href="#cb60-3" tabindex="-1"></a><span class="do">## build the environmental index</span></span>
-<span id="cb60-4"><a href="#cb60-4" tabindex="-1"></a>ei <span class="ot">&lt;-</span> <span class="fu">aggregate</span>(y<span class="sc">~</span>Env, <span class="at">data=</span>DT,<span class="at">FUN=</span>mean)</span>
-<span id="cb60-5"><a href="#cb60-5" tabindex="-1"></a><span class="fu">colnames</span>(ei)[<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="st">&quot;envIndex&quot;</span></span>
-<span id="cb60-6"><a href="#cb60-6" tabindex="-1"></a>ei<span class="sc">$</span>envIndex <span class="ot">&lt;-</span> ei<span class="sc">$</span>envIndex <span class="sc">-</span> <span class="fu">mean</span>(ei<span class="sc">$</span>envIndex,<span class="at">na.rm=</span><span class="cn">TRUE</span>) <span class="co"># center the envIndex to have clean VCs</span></span>
-<span id="cb60-7"><a href="#cb60-7" tabindex="-1"></a>ei <span class="ot">&lt;-</span> ei[<span class="fu">with</span>(ei, <span class="fu">order</span>(envIndex)), ]</span>
-<span id="cb60-8"><a href="#cb60-8" tabindex="-1"></a><span class="do">## add the environmental index to the original dataset</span></span>
-<span id="cb60-9"><a href="#cb60-9" tabindex="-1"></a>DT2 <span class="ot">&lt;-</span> <span class="fu">merge</span>(DT,ei, <span class="at">by=</span><span class="st">&quot;Env&quot;</span>)</span>
-<span id="cb60-10"><a href="#cb60-10" tabindex="-1"></a>DT2 <span class="ot">&lt;-</span> DT2[<span class="fu">with</span>(DT2, <span class="fu">order</span>(Name)), ]</span>
-<span id="cb60-11"><a href="#cb60-11" tabindex="-1"></a></span>
-<span id="cb60-12"><a href="#cb60-12" tabindex="-1"></a>ansFW <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(y<span class="sc">~</span> Env <span class="sc">+</span> (envIndex <span class="sc">||</span> Name), <span class="at">data=</span>DT2)</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="fu">data</span>(DT_h2)</span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_h2</span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a><span class="do">## build the environmental index</span></span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a>ei <span class="ot">&lt;-</span> <span class="fu">aggregate</span>(y<span class="sc">~</span>Env, <span class="at">data=</span>DT,<span class="at">FUN=</span>mean)</span>
+<span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a><span class="fu">colnames</span>(ei)[<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="st">&quot;envIndex&quot;</span></span>
+<span id="cb29-6"><a href="#cb29-6" tabindex="-1"></a>ei<span class="sc">$</span>envIndex <span class="ot">&lt;-</span> ei<span class="sc">$</span>envIndex <span class="sc">-</span> <span class="fu">mean</span>(ei<span class="sc">$</span>envIndex,<span class="at">na.rm=</span><span class="cn">TRUE</span>) <span class="co"># center the envIndex to have clean VCs</span></span>
+<span id="cb29-7"><a href="#cb29-7" tabindex="-1"></a>ei <span class="ot">&lt;-</span> ei[<span class="fu">with</span>(ei, <span class="fu">order</span>(envIndex)), ]</span>
+<span id="cb29-8"><a href="#cb29-8" tabindex="-1"></a><span class="do">## add the environmental index to the original dataset</span></span>
+<span id="cb29-9"><a href="#cb29-9" tabindex="-1"></a>DT2 <span class="ot">&lt;-</span> <span class="fu">merge</span>(DT,ei, <span class="at">by=</span><span class="st">&quot;Env&quot;</span>)</span>
+<span id="cb29-10"><a href="#cb29-10" tabindex="-1"></a>DT2 <span class="ot">&lt;-</span> DT2[<span class="fu">with</span>(DT2, <span class="fu">order</span>(Name)), ]</span>
+<span id="cb29-11"><a href="#cb29-11" tabindex="-1"></a></span>
+<span id="cb29-12"><a href="#cb29-12" tabindex="-1"></a>ansFW <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(y<span class="sc">~</span> Env <span class="sc">+</span> (envIndex <span class="sc">||</span> Name), <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">data=</span>DT2)</span></code></pre></div>
 <pre><code>## Warning in checkConv(attr(opt, &quot;derivs&quot;), opt$par, ctrl = control$checkConv, :
 ## Model failed to converge with max|grad| = 0.00203091 (tol = 0.002, component 1)</code></pre>
-<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansFW); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansFW); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
 ##  Name     (Intercept) 2.632643
 ##  Name.1   envIndex    0.041216
 ##  Residual             7.046535</code></pre>
-<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
 <pre><code>## [1] 7.046535</code></pre>
 <p>Alternatively, you can also add the covariance between both the main
 effect and the sensitivity</p>
-<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" tabindex="-1"></a>ansFW2 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(y<span class="sc">~</span> Env <span class="sc">+</span> (envIndex <span class="sc">|</span> Name), <span class="at">data=</span>DT2)</span>
-<span id="cb66-2"><a href="#cb66-2" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansFW2); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a>ansFW2 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(y<span class="sc">~</span> Env <span class="sc">+</span> (envIndex <span class="sc">|</span> Name), <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">data=</span>DT2)</span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansFW2); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance Cov  
 ##  Name     (Intercept) 2.75579       
 ##           envIndex    0.04279  0.343
 ##  Residual             7.03681</code></pre>
-<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
 <pre><code>## [1] 7.036805</code></pre>
 </div>
 </div>
@@ -616,43 +590,78 @@ factor analytic structures proposed by many research groups (Piepho,
 Smith, Cullis, Thompson, Meyer, etc.) are the way to go. lme4breeding
 has a reduced-rank factor analytic implementation available through the
 rrm() function. Here we show an example of how to fit the model:</p>
-<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" tabindex="-1"></a><span class="co"># data(DT_h2)</span></span>
-<span id="cb70-2"><a href="#cb70-2" tabindex="-1"></a><span class="co"># DT &lt;- DT_h2</span></span>
-<span id="cb70-3"><a href="#cb70-3" tabindex="-1"></a><span class="co"># DT=DT[with(DT, order(Env)), ]</span></span>
-<span id="cb70-4"><a href="#cb70-4" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb70-5"><a href="#cb70-5" tabindex="-1"></a><span class="co"># # fit diagonal model first to produce H matrix</span></span>
-<span id="cb70-6"><a href="#cb70-6" tabindex="-1"></a><span class="co"># Z &lt;- with(DT, smm(Env))</span></span>
-<span id="cb70-7"><a href="#cb70-7" tabindex="-1"></a><span class="co"># diagFormula &lt;- paste0( &quot;y ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;|| Name)&quot;)</span></span>
-<span id="cb70-8"><a href="#cb70-8" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
-<span id="cb70-9"><a href="#cb70-9" tabindex="-1"></a><span class="co"># print(as.formula(diagFormula))</span></span>
-<span id="cb70-10"><a href="#cb70-10" tabindex="-1"></a><span class="co"># ans1a &lt;- lmebreed(as.formula(diagFormula),</span></span>
-<span id="cb70-11"><a href="#cb70-11" tabindex="-1"></a><span class="co">#                   data=DT)</span></span>
-<span id="cb70-12"><a href="#cb70-12" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ans1a); print(vc,comp=c(&quot;Variance&quot;))</span></span>
-<span id="cb70-13"><a href="#cb70-13" tabindex="-1"></a><span class="co"># H0 &lt;- ranef(ans1a)$Name # GxE table</span></span>
-<span id="cb70-14"><a href="#cb70-14" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb70-15"><a href="#cb70-15" tabindex="-1"></a><span class="co"># # reduced rank model</span></span>
-<span id="cb70-16"><a href="#cb70-16" tabindex="-1"></a><span class="co"># Z &lt;- with(DT,  rrm(Env, H = H0, nPC = 3)) </span></span>
-<span id="cb70-17"><a href="#cb70-17" tabindex="-1"></a><span class="co"># Zd &lt;- with(DT, smm(Env))</span></span>
-<span id="cb70-18"><a href="#cb70-18" tabindex="-1"></a><span class="co"># faFormula &lt;- paste0( &quot;y ~ Env + (0+&quot;, paste(colnames(Z), collapse = &quot;+&quot;), &quot;| Name) + (0+&quot;,paste(colnames(Zd), collapse = &quot;+&quot;), &quot;|| Name)&quot;)</span></span>
-<span id="cb70-19"><a href="#cb70-19" tabindex="-1"></a><span class="co"># for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] &lt;- Z[,i]}</span></span>
-<span id="cb70-20"><a href="#cb70-20" tabindex="-1"></a><span class="co"># print(as.formula(faFormula))</span></span>
-<span id="cb70-21"><a href="#cb70-21" tabindex="-1"></a><span class="co"># ansFA &lt;- lmebreed(as.formula(faFormula),</span></span>
-<span id="cb70-22"><a href="#cb70-22" tabindex="-1"></a><span class="co">#                   data=DT)</span></span>
-<span id="cb70-23"><a href="#cb70-23" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ansFA); print(vc,comp=c(&quot;Variance&quot;))</span></span>
-<span id="cb70-24"><a href="#cb70-24" tabindex="-1"></a><span class="co"># ve &lt;- attr(vc, &quot;sc&quot;)^2; ve</span></span>
-<span id="cb70-25"><a href="#cb70-25" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb70-26"><a href="#cb70-26" tabindex="-1"></a><span class="co"># loadings=with(DT, rrm(Env, nPC = 3, H = H0, returnGamma = T) )$Gamma</span></span>
-<span id="cb70-27"><a href="#cb70-27" tabindex="-1"></a><span class="co"># Gint &lt;- loadings %*% vc$Name %*% t(loadings)</span></span>
-<span id="cb70-28"><a href="#cb70-28" tabindex="-1"></a><span class="co"># Gspec &lt;- diag( unlist(lapply(vc[2:16], function(x){x[[1]]})) )</span></span>
-<span id="cb70-29"><a href="#cb70-29" tabindex="-1"></a><span class="co"># G &lt;- Gint + Gspec</span></span>
-<span id="cb70-30"><a href="#cb70-30" tabindex="-1"></a><span class="co"># # lattice::levelplot(cov2cor(G))</span></span>
-<span id="cb70-31"><a href="#cb70-31" tabindex="-1"></a><span class="co"># # colfunc &lt;- colorRampPalette(c(&quot;steelblue4&quot;,&quot;springgreen&quot;,&quot;yellow&quot;))</span></span>
-<span id="cb70-32"><a href="#cb70-32" tabindex="-1"></a><span class="co"># # hv &lt;- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)</span></span>
-<span id="cb70-33"><a href="#cb70-33" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb70-34"><a href="#cb70-34" tabindex="-1"></a><span class="co"># u &lt;- ranef(ansFA)$Name</span></span>
-<span id="cb70-35"><a href="#cb70-35" tabindex="-1"></a><span class="co"># uInter &lt;- as.matrix(u[,1:3]) %*% t(as.matrix(loadings))</span></span>
-<span id="cb70-36"><a href="#cb70-36" tabindex="-1"></a><span class="co"># uSpec &lt;- as.matrix(u[,-c(1:3)])</span></span>
-<span id="cb70-37"><a href="#cb70-37" tabindex="-1"></a><span class="co"># u &lt;- uSpec + uInter</span></span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" tabindex="-1"></a><span class="fu">data</span>(DT_h2)</span>
+<span id="cb39-2"><a href="#cb39-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_h2</span>
+<span id="cb39-3"><a href="#cb39-3" tabindex="-1"></a>DT<span class="ot">=</span>DT[<span class="fu">with</span>(DT, <span class="fu">order</span>(Env)), ]</span>
+<span id="cb39-4"><a href="#cb39-4" tabindex="-1"></a><span class="fu">head</span>(DT)</span></code></pre></div>
+<pre><code>##          Name     Env Loc Year     Block  y
+## 67   MSL007-B CA.2011  CA 2011 CA.2011.2  5
+## 105  MSL007-B CA.2011  CA 2011 CA.2011.1  6
+## 308  MSK061-4 CA.2011  CA 2011 CA.2011.2  9
+## 393  MSK061-4 CA.2011  CA 2011 CA.2011.1 10
+## 469 MSR169-8Y CA.2011  CA 2011 CA.2011.1 11
+## 471     NY148 CA.2011  CA 2011 CA.2011.1 11</code></pre>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" tabindex="-1"></a>indNames <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(<span class="fu">unique</span>(DT<span class="sc">$</span>Name))</span>
+<span id="cb41-2"><a href="#cb41-2" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">length</span>(indNames))</span>
+<span id="cb41-3"><a href="#cb41-3" tabindex="-1"></a><span class="fu">rownames</span>(A) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(A) <span class="ot">&lt;-</span> indNames</span>
+<span id="cb41-4"><a href="#cb41-4" tabindex="-1"></a></span>
+<span id="cb41-5"><a href="#cb41-5" tabindex="-1"></a><span class="co"># fit diagonal model first to produce H matrix</span></span>
+<span id="cb41-6"><a href="#cb41-6" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env))</span>
+<span id="cb41-7"><a href="#cb41-7" tabindex="-1"></a>diagFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;y ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
+<span id="cb41-8"><a href="#cb41-8" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
+<span id="cb41-9"><a href="#cb41-9" tabindex="-1"></a>ans1a <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(diagFormula),</span>
+<span id="cb41-10"><a href="#cb41-10" tabindex="-1"></a>                  <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb41-11"><a href="#cb41-11" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">FALSE</span>,<span class="at">data=</span>DT)</span>
+<span id="cb41-12"><a href="#cb41-12" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ans1a); </span>
+<span id="cb41-13"><a href="#cb41-13" tabindex="-1"></a>H0 <span class="ot">&lt;-</span> <span class="fu">ranef</span>(ans1a)<span class="sc">$</span>Name <span class="co"># GxE table</span></span>
+<span id="cb41-14"><a href="#cb41-14" tabindex="-1"></a></span>
+<span id="cb41-15"><a href="#cb41-15" tabindex="-1"></a><span class="co"># reduced rank model</span></span>
+<span id="cb41-16"><a href="#cb41-16" tabindex="-1"></a>nPC<span class="ot">=</span><span class="dv">3</span></span>
+<span id="cb41-17"><a href="#cb41-17" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT,  <span class="fu">rrm</span>(Env, <span class="at">H =</span> H0, <span class="at">nPC =</span> nPC) ) </span>
+<span id="cb41-18"><a href="#cb41-18" tabindex="-1"></a>Zd <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">smm</span>(Env) )</span>
+<span id="cb41-19"><a href="#cb41-19" tabindex="-1"></a>faFormula <span class="ot">&lt;-</span> <span class="fu">paste0</span>( <span class="st">&quot;y ~ Env + (0+&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(Z), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>),</span>
+<span id="cb41-20"><a href="#cb41-20" tabindex="-1"></a>                     <span class="st">&quot;| Name) + (0+&quot;</span>,<span class="fu">paste</span>(<span class="fu">colnames</span>(Zd), <span class="at">collapse =</span> <span class="st">&quot;+&quot;</span>), <span class="st">&quot;|| Name)&quot;</span>)</span>
+<span id="cb41-21"><a href="#cb41-21" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(Z)){DT[,<span class="fu">colnames</span>(Z)[i]] <span class="ot">&lt;-</span> Z[,i]}</span>
+<span id="cb41-22"><a href="#cb41-22" tabindex="-1"></a>ansFA <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(<span class="fu">as.formula</span>(faFormula),</span>
+<span id="cb41-23"><a href="#cb41-23" tabindex="-1"></a>                  <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
+<span id="cb41-24"><a href="#cb41-24" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">data=</span>DT)</span>
+<span id="cb41-25"><a href="#cb41-25" tabindex="-1"></a></span>
+<span id="cb41-26"><a href="#cb41-26" tabindex="-1"></a>u <span class="ot">&lt;-</span> <span class="fu">ranef</span>(ansFA)<span class="sc">$</span>Name <span class="co"># all BLUPs</span></span>
+<span id="cb41-27"><a href="#cb41-27" tabindex="-1"></a>scores <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(u[,<span class="dv">1</span><span class="sc">:</span>nPC])  <span class="co"># factor scores</span></span>
+<span id="cb41-28"><a href="#cb41-28" tabindex="-1"></a>loadings<span class="ot">=</span><span class="fu">with</span>(DT, <span class="fu">rrm</span>(Env, <span class="at">nPC =</span> nPC, <span class="at">H =</span> H0, <span class="co"># lodings (latent covars)</span></span>
+<span id="cb41-29"><a href="#cb41-29" tabindex="-1"></a>                      <span class="at">returnGamma =</span> <span class="cn">TRUE</span>) )<span class="sc">$</span>Gamma</span>
+<span id="cb41-30"><a href="#cb41-30" tabindex="-1"></a></span>
+<span id="cb41-31"><a href="#cb41-31" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansFA); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>)) <span class="co"># Vcomps</span></span></code></pre></div>
+<pre><code>##  Groups   Name    Variance   Cov          
+##  Name     PC1     4.1033e+00              
+##           PC2     4.1795e+00  1.351       
+##           PC3     5.7998e+00  2.418 -1.410
+##  Name.1   CA.2011 7.9845e+00              
+##  Name.2   CA.2012 0.0000e+00              
+##  Name.3   CA.2013 7.3193e-01              
+##  Name.4   FL.2011 1.1131e+00              
+##  Name.5   FL.2012 8.7289e-09              
+##  Name.6   FL.2013 0.0000e+00              
+##  Name.7   MI.2011 4.5985e+00              
+##  Name.8   MI.2012 2.7526e+00              
+##  Name.9   MI.2013 1.4456e+01              
+##  Name.10  MO.2011 0.0000e+00              
+##  Name.11  MO.2012 1.2248e+01              
+##  Name.12  MO.2013 1.9038e-01              
+##  Name.13  NY.2011 3.8834e+00              
+##  Name.14  NY.2012 2.0274e-01              
+##  Name.15  NY.2013 7.7716e+00              
+##  Residual         4.0234e+00</code></pre>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a>vcFA <span class="ot">&lt;-</span> vc[[<span class="dv">1</span>]] <span class="co"># G of PCs</span></span>
+<span id="cb43-2"><a href="#cb43-2" tabindex="-1"></a>vcDG <span class="ot">&lt;-</span> <span class="fu">diag</span>( <span class="fu">unlist</span>(<span class="fu">lapply</span>(vc[<span class="dv">2</span><span class="sc">:</span><span class="dv">16</span>], <span class="cf">function</span>(x){x[[<span class="dv">1</span>]]})) ) <span class="co"># G of DG</span></span>
+<span id="cb43-3"><a href="#cb43-3" tabindex="-1"></a>vcUS <span class="ot">&lt;-</span> loadings <span class="sc">%*%</span> vcFA <span class="sc">%*%</span> <span class="fu">t</span>(loadings) <span class="co"># G of US</span></span>
+<span id="cb43-4"><a href="#cb43-4" tabindex="-1"></a>G <span class="ot">&lt;-</span> vcUS <span class="sc">+</span> vcDG <span class="co"># total G</span></span>
+<span id="cb43-5"><a href="#cb43-5" tabindex="-1"></a>colfunc <span class="ot">&lt;-</span> <span class="fu">colorRampPalette</span>(<span class="fu">c</span>(<span class="st">&quot;steelblue4&quot;</span>,<span class="st">&quot;springgreen&quot;</span>,<span class="st">&quot;yellow&quot;</span>))</span>
+<span id="cb43-6"><a href="#cb43-6" tabindex="-1"></a>hv <span class="ot">&lt;-</span> <span class="fu">heatmap</span>(<span class="fu">cov2cor</span>(G), <span class="at">col =</span> <span class="fu">colfunc</span>(<span class="dv">100</span>), <span class="at">symm =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" tabindex="-1"></a>uFA <span class="ot">&lt;-</span> scores <span class="sc">%*%</span> <span class="fu">t</span>(loadings) <span class="co"># recover US effects</span></span>
+<span id="cb44-2"><a href="#cb44-2" tabindex="-1"></a>uDG <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(u[,(nPC<span class="sc">+</span><span class="dv">1</span>)<span class="sc">:</span><span class="fu">ncol</span>(u)]) <span class="co"># recover DG effects </span></span>
+<span id="cb44-3"><a href="#cb44-3" tabindex="-1"></a>u <span class="ot">&lt;-</span> uFA <span class="sc">+</span> uDG <span class="co"># total effects</span></span></code></pre></div>
 <p>As can be seen genotype BLUPs for all environments can be recovered
 by multiplying the loadings (Gamma) by the factor scores. This is a
 parsomonious way to model an unstructured covariance.</p>
@@ -665,12 +674,12 @@ fixed genotype effects to obtain the estimated marginal means (EMMs) or
 best linear unbiased estimators (BLUEs) as adjusted entry means. These
 adjusted entry means are then used as the phenotype or response variable
 in GWAS and genomic prediction studies.</p>
-<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" tabindex="-1"></a><span class="do">##########</span></span>
-<span id="cb71-2"><a href="#cb71-2" tabindex="-1"></a><span class="do">## stage 1</span></span>
-<span id="cb71-3"><a href="#cb71-3" tabindex="-1"></a><span class="do">##########</span></span>
-<span id="cb71-4"><a href="#cb71-4" tabindex="-1"></a><span class="fu">data</span>(DT_h2)</span>
-<span id="cb71-5"><a href="#cb71-5" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_h2</span>
-<span id="cb71-6"><a href="#cb71-6" tabindex="-1"></a><span class="fu">head</span>(DT)</span></code></pre></div>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" tabindex="-1"></a><span class="do">##########</span></span>
+<span id="cb45-2"><a href="#cb45-2" tabindex="-1"></a><span class="do">## stage 1</span></span>
+<span id="cb45-3"><a href="#cb45-3" tabindex="-1"></a><span class="do">##########</span></span>
+<span id="cb45-4"><a href="#cb45-4" tabindex="-1"></a><span class="fu">data</span>(DT_h2)</span>
+<span id="cb45-5"><a href="#cb45-5" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_h2</span>
+<span id="cb45-6"><a href="#cb45-6" tabindex="-1"></a><span class="fu">head</span>(DT)</span></code></pre></div>
 <pre><code>##                 Name     Env Loc Year     Block y
 ## 1            W8822-3 FL.2012  FL 2012 FL.2012.1 2
 ## 2            W8867-7 FL.2012  FL 2012 FL.2012.2 2
@@ -678,16 +687,17 @@ in GWAS and genomic prediction studies.</p>
 ## 4         CO00270-7W FL.2012  FL 2012 FL.2012.2 3
 ## 5 Manistee(MSL292-A) FL.2013  FL 2013 FL.2013.2 3
 ## 6           MSM246-B FL.2012  FL 2012 FL.2012.2 3</code></pre>
-<div class="sourceCode" id="cb73"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" tabindex="-1"></a>envs <span class="ot">&lt;-</span> <span class="fu">unique</span>(DT<span class="sc">$</span>Env)</span>
-<span id="cb73-2"><a href="#cb73-2" tabindex="-1"></a>vals <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb73-3"><a href="#cb73-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(envs)){</span>
-<span id="cb73-4"><a href="#cb73-4" tabindex="-1"></a>  ans1 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(y<span class="sc">~</span>Name <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Block), <span class="at">data=</span> <span class="fu">droplevels</span>(DT[<span class="fu">which</span>(DT<span class="sc">$</span>Env <span class="sc">==</span> envs[i]),]) )</span>
-<span id="cb73-5"><a href="#cb73-5" tabindex="-1"></a>  b <span class="ot">&lt;-</span> <span class="fu">fixef</span>(ans1) </span>
-<span id="cb73-6"><a href="#cb73-6" tabindex="-1"></a>  b[<span class="dv">2</span><span class="sc">:</span><span class="fu">length</span>(b)] <span class="ot">&lt;-</span> b[<span class="dv">2</span><span class="sc">:</span><span class="fu">length</span>(b)] <span class="sc">+</span> b[<span class="dv">1</span>]</span>
-<span id="cb73-7"><a href="#cb73-7" tabindex="-1"></a>  ids <span class="ot">&lt;-</span> <span class="fu">colnames</span>(<span class="fu">model.matrix</span>(<span class="sc">~</span>Name<span class="dv">-1</span>, <span class="at">data=</span><span class="fu">droplevels</span>(DT[<span class="fu">which</span>(DT<span class="sc">$</span>Env <span class="sc">==</span> envs[i]),]) ))</span>
-<span id="cb73-8"><a href="#cb73-8" tabindex="-1"></a>  ids <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;Name&quot;</span>,<span class="st">&quot;&quot;</span>,ids)</span>
-<span id="cb73-9"><a href="#cb73-9" tabindex="-1"></a>  vals[[i]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Estimate=</span>b , <span class="at">stdError=</span> <span class="fu">diag</span>( <span class="fu">vcov</span>(ans1)), <span class="at">Effect=</span> ids, <span class="at">Env=</span> envs[i])</span>
-<span id="cb73-10"><a href="#cb73-10" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a>envs <span class="ot">&lt;-</span> <span class="fu">unique</span>(DT<span class="sc">$</span>Env)</span>
+<span id="cb47-2"><a href="#cb47-2" tabindex="-1"></a>vals <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb47-3"><a href="#cb47-3" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(envs)){</span>
+<span id="cb47-4"><a href="#cb47-4" tabindex="-1"></a>  ans1 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(y<span class="sc">~</span>Name <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Block), <span class="at">verbose =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb47-5"><a href="#cb47-5" tabindex="-1"></a>                   <span class="at">data=</span> <span class="fu">droplevels</span>(DT[<span class="fu">which</span>(DT<span class="sc">$</span>Env <span class="sc">==</span> envs[i]),]) )</span>
+<span id="cb47-6"><a href="#cb47-6" tabindex="-1"></a>  b <span class="ot">&lt;-</span> <span class="fu">fixef</span>(ans1) </span>
+<span id="cb47-7"><a href="#cb47-7" tabindex="-1"></a>  b[<span class="dv">2</span><span class="sc">:</span><span class="fu">length</span>(b)] <span class="ot">&lt;-</span> b[<span class="dv">2</span><span class="sc">:</span><span class="fu">length</span>(b)] <span class="sc">+</span> b[<span class="dv">1</span>]</span>
+<span id="cb47-8"><a href="#cb47-8" tabindex="-1"></a>  ids <span class="ot">&lt;-</span> <span class="fu">colnames</span>(<span class="fu">model.matrix</span>(<span class="sc">~</span>Name<span class="dv">-1</span>, <span class="at">data=</span><span class="fu">droplevels</span>(DT[<span class="fu">which</span>(DT<span class="sc">$</span>Env <span class="sc">==</span> envs[i]),]) ))</span>
+<span id="cb47-9"><a href="#cb47-9" tabindex="-1"></a>  ids <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;Name&quot;</span>,<span class="st">&quot;&quot;</span>,ids)</span>
+<span id="cb47-10"><a href="#cb47-10" tabindex="-1"></a>  vals[[i]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Estimate=</span>b , <span class="at">stdError=</span> <span class="fu">diag</span>( <span class="fu">vcov</span>(ans1)), <span class="at">Effect=</span> ids, <span class="at">Env=</span> envs[i])</span>
+<span id="cb47-11"><a href="#cb47-11" tabindex="-1"></a>}</span></code></pre></div>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
@@ -695,26 +705,26 @@ in GWAS and genomic prediction studies.</p>
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)
 ## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
-<div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" tabindex="-1"></a>DT2 <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, vals)</span>
-<span id="cb75-2"><a href="#cb75-2" tabindex="-1"></a></span>
-<span id="cb75-3"><a href="#cb75-3" tabindex="-1"></a><span class="do">##########</span></span>
-<span id="cb75-4"><a href="#cb75-4" tabindex="-1"></a><span class="do">## stage 2</span></span>
-<span id="cb75-5"><a href="#cb75-5" tabindex="-1"></a><span class="do">##########</span></span>
-<span id="cb75-6"><a href="#cb75-6" tabindex="-1"></a>DT2<span class="sc">$</span>w <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>DT2<span class="sc">$</span>stdError</span>
-<span id="cb75-7"><a href="#cb75-7" tabindex="-1"></a>ans2 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Estimate<span class="sc">~</span>Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Effect) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Env<span class="sc">:</span>Effect), <span class="at">weights =</span> w,<span class="at">data=</span>DT2, </span>
-<span id="cb75-8"><a href="#cb75-8" tabindex="-1"></a>                 <span class="at">control =</span> <span class="fu">lmerControl</span>(</span>
-<span id="cb75-9"><a href="#cb75-9" tabindex="-1"></a>                   <span class="co"># optimizer=&quot;bobyqa&quot;,</span></span>
-<span id="cb75-10"><a href="#cb75-10" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nlev =</span> <span class="st">&quot;ignore&quot;</span>,</span>
-<span id="cb75-11"><a href="#cb75-11" tabindex="-1"></a>                   <span class="at">check.nobs.vs.rankZ =</span> <span class="st">&quot;ignore&quot;</span>,</span>
-<span id="cb75-12"><a href="#cb75-12" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nRE=</span><span class="st">&quot;ignore&quot;</span></span>
-<span id="cb75-13"><a href="#cb75-13" tabindex="-1"></a>                 )</span>
-<span id="cb75-14"><a href="#cb75-14" tabindex="-1"></a>                 )</span>
-<span id="cb75-15"><a href="#cb75-15" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ans2); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" tabindex="-1"></a>DT2 <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, vals)</span>
+<span id="cb49-2"><a href="#cb49-2" tabindex="-1"></a></span>
+<span id="cb49-3"><a href="#cb49-3" tabindex="-1"></a><span class="do">##########</span></span>
+<span id="cb49-4"><a href="#cb49-4" tabindex="-1"></a><span class="do">## stage 2</span></span>
+<span id="cb49-5"><a href="#cb49-5" tabindex="-1"></a><span class="do">##########</span></span>
+<span id="cb49-6"><a href="#cb49-6" tabindex="-1"></a>DT2<span class="sc">$</span>w <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>DT2<span class="sc">$</span>stdError</span>
+<span id="cb49-7"><a href="#cb49-7" tabindex="-1"></a>ans2 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Estimate<span class="sc">~</span>Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Effect) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Env<span class="sc">:</span>Effect), <span class="at">weights =</span> w,<span class="at">data=</span>DT2, </span>
+<span id="cb49-8"><a href="#cb49-8" tabindex="-1"></a>                 <span class="at">control =</span> <span class="fu">lmerControl</span>(</span>
+<span id="cb49-9"><a href="#cb49-9" tabindex="-1"></a>                   <span class="co"># optimizer=&quot;bobyqa&quot;,</span></span>
+<span id="cb49-10"><a href="#cb49-10" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nlev =</span> <span class="st">&quot;ignore&quot;</span>,</span>
+<span id="cb49-11"><a href="#cb49-11" tabindex="-1"></a>                   <span class="at">check.nobs.vs.rankZ =</span> <span class="st">&quot;ignore&quot;</span>,</span>
+<span id="cb49-12"><a href="#cb49-12" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nRE=</span><span class="st">&quot;ignore&quot;</span></span>
+<span id="cb49-13"><a href="#cb49-13" tabindex="-1"></a>                 ), <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb49-14"><a href="#cb49-14" tabindex="-1"></a>                 )</span>
+<span id="cb49-15"><a href="#cb49-15" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ans2); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups     Name        Variance
 ##  Env:Effect (Intercept) 2.91649 
 ##  Effect     (Intercept) 1.99225 
 ##  Residual               0.72139</code></pre>
-<div class="sourceCode" id="cb77"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(vc, <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span>; ve</span></code></pre></div>
 <pre><code>## [1] 0.7213944</code></pre>
 </div>
 <div id="literature" class="section level2">

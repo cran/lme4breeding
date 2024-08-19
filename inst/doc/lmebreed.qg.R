@@ -1,12 +1,15 @@
-## -----------------------------------------------------------------------------
+## ----setup, include=FALSE-----------------------------------------------------
+# knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 library(lme4breeding)
+
+## -----------------------------------------------------------------------------
 data(DT_example)
 DT <- DT_example
 A <- A_example
 
 ans1 <- lmebreed(Yield~ (1|Name) + (1|Env) + 
                    (1|Env:Name) + (1|Env:Block),
-             data=DT)
+             verbose = FALSE, data=DT)
 vc <- VarCorr(ans1); print(vc,comp=c("Variance"))
 ve <- attr(VarCorr(ans1), "sc")^2
 n.env <- length(levels(DT$Env))
@@ -29,7 +32,7 @@ mix1 <- lmebreed(Yield~ (1|id) + (1|Rowf) + (1|Colf),
                    check.nobs.vs.nlev = "ignore",
                    check.nobs.vs.rankZ = "ignore",
                    check.nobs.vs.nRE="ignore"
-                 ),
+                 ),verbose = FALSE,
                  data=DT)
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 ve <- attr(VarCorr(mix1), "sc")^2
@@ -47,7 +50,7 @@ csdiagFormula <- paste0( "Yield ~ Env + (", paste(colnames(Z), collapse = "+"), 
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 ansCSDG <- lmebreed(as.formula(csdiagFormula),
                     relmat = list(Name = A ),
-                    data=DT)
+                    verbose = FALSE, data=DT)
 vc <- VarCorr(ansCSDG); print(vc,comp=c("Variance"))
 
 ## -----------------------------------------------------------------------------
@@ -57,7 +60,7 @@ DTi <- DTi_cornhybrids
 GT <- GT_cornhybrids
 
 modFD <- lmebreed(Yield~Location + (1|GCA1)+(1|GCA2)+(1|SCA),
-              data=DT)
+              verbose = FALSE,data=DT)
 
 vc <- VarCorr(modFD); print(vc,comp=c("Variance"))
 Vgca <- vc$GCA1 + vc$GCA2
@@ -84,7 +87,7 @@ fema <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
 #### model using overlay without relationship matrix
 modh <- lmebreed(sugar ~ (1|genof) + (1|fema),
                  addmat = list(fema=Z),
-             data=DT)
+             verbose = FALSE, data=DT)
 vc <- VarCorr(modh); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2;ve
 
@@ -112,7 +115,7 @@ ve <- attr(vc, "sc")^2;ve
 #                   check.nobs.vs.nlev = "ignore",
 #                   check.nobs.vs.rankZ = "ignore",
 #                   check.nobs.vs.nRE="ignore"
-#                 ),
+#                 ), verbose = FALSE,
 #                 data=y.trn)
 # vc <- VarCorr(ans); print(vc,comp=c("Variance"))
 # 
@@ -137,7 +140,7 @@ ve <- attr(vc, "sc")^2;ve
 # M <- tcrossprod(GT)
 # xx <- with(y.trn, redmm(x=line, M=M, nPC=100, returnLam = TRUE))
 # custom <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
-# ansRRBLUP <- lmebreed(X1 ~ (1|custom),
+# ansRRBLUP <- lmebreed(X1 ~ (1|custom), verbose = FALSE,
 #                       addmat = list(custom=Z),
 #                       data=y.trn)
 # re <- ranef(ansRRBLUP)$custom
@@ -165,7 +168,7 @@ ve <- attr(vc, "sc")^2;ve
 # modIGE <- lmebreed(trait ~ block + (0+fn+nn|both),
 #                    addmat = list(both=list(Zf,Zn)),
 #                    relmat = list(both=A_ige),
-#                    data = DT)
+#                    verbose = FALSE, data = DT)
 # vc <- VarCorr(modIGE); print(vc,comp=c("Variance"))
 # blups <- ranef(modIGE)
 # pairs(blups$both)
@@ -189,7 +192,7 @@ ve <- attr(vc, "sc")^2;ve
 # ans2 <- lmebreed(GY ~ (1|dent) + (1|flint),
 #                  relmat = list(dent=Ad,
 #                                flint=Af),
-#                  data=y.trn)
+#                  verbose = FALSE, data=y.trn)
 # vc <- VarCorr(ans2); print(vc,comp=c("Variance"))
 # 
 # # take a extended dataset and fit a dummy model 
@@ -238,7 +241,7 @@ mix1 <- lmebreed(Yield~ (1|Rowf) + (1|Colf) + (1|spatial),
                    check.nobs.vs.nlev = "ignore",
                    check.nobs.vs.rankZ = "ignore",
                    check.nobs.vs.nRE="ignore"
-                 ),
+                 ), verbose = FALSE,
                  data=DT)
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 
@@ -262,7 +265,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 #                    check.nobs.vs.nlev = "ignore",
 #                    check.nobs.vs.rankZ = "ignore",
 #                    check.nobs.vs.nRE="ignore"
-#                  ),
+#                  ), verbose = FALSE,
 #                  data=DT2$long)
 # vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 
@@ -289,7 +292,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 #                        check.nobs.vs.nlev = "ignore",
 #                        check.nobs.vs.rankZ = "ignore",
 #                        check.nobs.vs.nRE="ignore"
-#                      ),
+#                      ), verbose = FALSE,
 #                      data=DT)
 # 
 # #convert BLUPs to marker effects me=M'(M'M)- u
@@ -326,7 +329,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 #                    check.nobs.vs.nlev = "ignore",
 #                    check.nobs.vs.rankZ = "ignore",
 #                    check.nobs.vs.nRE="ignore"
-#                  ),
+#                  ), verbose = FALSE,
 #                  data=DTd)
 # vc <- VarCorr(modeld); print(vc,comp=c("Variance"))
 # 
@@ -340,7 +343,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 #                      check.nobs.vs.nlev = "ignore",
 #                      check.nobs.vs.rankZ = "ignore",
 #                      check.nobs.vs.nRE="ignore"
-#                    ),
+#                    ), verbose = FALSE,
 #                    data=DTn)
 # 
 # ## compare regular and transformed blups
@@ -386,7 +389,7 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ##############################
 mix2 <- lmebreed(yield~ setf + setf:repf +
                    (1|femalef:malef:setf) + (1|malef:setf), 
-             data=DT)
+             verbose = FALSE, data=DT)
 vc <- VarCorr(mix2); print(vc,comp=c("Variance"))
 Vfm <- vc$`femalef:malef:setf`
 Vm <- vc$`malef:setf`
@@ -448,7 +451,7 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 mix2 <- lmebreed(yield~ setf + setf:repf +
                (1|femalef:malef:setf) + (1|malef:setf) + 
                (1|femalef:setf),
-             data=DT)
+             verbose = FALSE, data=DT)
 vc <- VarCorr(mix2); print(vc,comp=c("Variance"))
 Vfm <- vc$`femalef:malef:setf`
 Vm <- vc$`malef:setf`
@@ -485,7 +488,7 @@ k <- 1 # to be used for degrees of freedom (number of levels in fixed effects)
 #                        check.nobs.vs.nlev = "ignore",
 #                        check.nobs.vs.rankZ = "ignore",
 #                        check.nobs.vs.nRE="ignore"
-#                      ),
+#                      ), verbose = FALSE,
 #                      data=DT)
 # vc <- VarCorr(mix.part); print(vc,comp=c("Variance"))
 # mme <- getMME(object=mix.part)

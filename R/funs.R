@@ -7,7 +7,7 @@ lmebreed <-
            model = TRUE, x = TRUE, dateWarning=TRUE, returnParams=FALSE, 
            rotation=FALSE, coefOutRotation=8, ...)
   {
-    my.date <- "2024-09-01" # expiry date
+    my.date <- "2024-10-01" # expiry date
     your.date <- Sys.Date()
     ## if your month is greater than my month you are outdated
     if(dateWarning){
@@ -62,6 +62,9 @@ lmebreed <-
       if(rotation){ # if UDU decomposition + Cholesky is requested
         if(length(relmat) > 1){warning("Rotation is only reported to be accurate with one relationship matrix.", call. = FALSE)}
         udu <- umat(formula=as.formula(paste("~", paste(names(relmat), collapse = "+"))), relmat = relmat, data=data, addmat = addmat)
+        # if rotation we impute
+        data[,response] <- imputev(x=data[,response],method="median",by=udu$record)
+        goodRecords <- 1:nrow(data)          
         newValues <- (udu$Utn[goodRecords,goodRecords] %*% data[goodRecords,response])[,1]
         # newValues <- (udu$Utn[,goodRecords] %*% data[goodRecords,response])[,1]
         outlier <- grDevices::boxplot.stats(x=newValues,coef=coefOutRotation )$out
@@ -97,7 +100,7 @@ lmebreed <-
     if(length(relmat) > 0){
       if(rotation){
         # toZero <- which(lmod$X == 0, arr.ind = TRUE)
-        lmod$X <- udu$Utn[goodRecords,goodRecords] %*% lmod$X
+        # lmod$X <- udu$Utn[goodRecords,goodRecords] %*% lmod$X
         # lmod$X[toZero] =0
         # lmod$X <- udu$Utn %*% lmod$X
         if(verbose){message("* Rotation applied to the X matrix.")}
@@ -141,9 +144,11 @@ lmebreed <-
         provRelFac <- relfac[[i]][pick,pick]
         if(nrow(Zt[rowsi,]) == nrow(provRelFac)){ # regular model
           Zt[rowsi,] <- provRelFac %*% Zt[rowsi,]
+          # Zt[rowsi,] <- t( t(udu$Utn[goodRecords,goodRecords]) %*% t(provRelFac %*% Zt[rowsi,] ) )
         }else{ # unstructured model
           mm <- Matrix::Diagonal( length(lmod$reTrms$cnms[[pnms[i]]]) )
           Zt[rowsi,] <- Matrix::kronecker(provRelFac, mm) %*% Zt[rowsi,]
+          # Zt[rowsi,] <- t( t(udu$Utn[goodRecords,goodRecords]) %*%  t(Matrix::kronecker(provRelFac, mm) %*% Zt[rowsi,]) )
         }
       }
     }
@@ -179,7 +184,7 @@ lmebreed <-
       # make results a mkMerMod object
       mm <- mkMerMod(environment(devfun), opt, reTrms, lmod$fr, mc)
       cls <- if (gaus){"lmerlmebreed"}else{"glmerlmebreed"} 
-      ans <- do.call(new, list(Class=cls, relfac=relfac, udu=udu,
+      ans <- do.call(new, list(Class=cls, relfac=relfac, udu=udu, #goodRecords=goodRecords,
                                frame=mm@frame, flist=mm@flist, cnms=mm@cnms, Gp=mm@Gp,
                                theta=mm@theta, beta=mm@beta,u=mm@u,lower=mm@lower,
                                devcomp=mm@devcomp, pp=mm@pp,resp=mm@resp,optinfo=mm@optinfo))
