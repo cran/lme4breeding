@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2024-08-18" />
+<meta name="date" content="2024-10-16" />
 
 <title>Quantitative genetics using the lme4breeding package</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Quantitative genetics using the
 lme4breeding package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2024-08-18</h4>
+<h4 class="date">2024-10-16</h4>
 
 
 
@@ -861,10 +861,10 @@ spline model.</p>
 <span id="cb34-20"><a href="#cb34-20" tabindex="-1"></a>                 <span class="at">data=</span>DT)</span>
 <span id="cb34-21"><a href="#cb34-21" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(mix1); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
-##  spatial  (Intercept)  446.69 
-##  Colf     (Intercept)  157.84 
-##  Rowf     (Intercept)  819.16 
-##  Residual             3533.81</code></pre>
+##  spatial  (Intercept)  320.61 
+##  Colf     (Intercept)  158.29 
+##  Rowf     (Intercept)  823.48 
+##  Residual             3564.70</code></pre>
 <p>Notice that the job is done by the <code>spl2Da()</code> function
 that takes the <code>Row</code> and <code>Col</code> information to fit
 a spatial kernel.</p>
@@ -999,10 +999,9 @@ inverted easily and make multitrait models more feasible.</p>
 <span id="cb39-48"><a href="#cb39-48" tabindex="-1"></a><span class="co">#      y=ren[colnames(D),], </span></span>
 <span id="cb39-49"><a href="#cb39-49" tabindex="-1"></a><span class="co">#      xlab=&quot;UDU blup&quot;, ylab=&quot;blup&quot;)</span></span>
 <span id="cb39-50"><a href="#cb39-50" tabindex="-1"></a><span class="co"># </span></span></code></pre></div>
-<p>As can be seen, the two models are equivalent. Despite the fact that
-lme4breeding doesn’t take a great advantage of this trick because it was
-built for dense matrices using the Armadillo library. Other software may
-be better using this trick.</p>
+<p>As can be seen, the two models are equivalent. The lme4breeding
+library uses this trick directly by setting the argument
+rotation=TRUE.</p>
 </div>
 <div id="mating-designs" class="section level3">
 <h3>3) Mating designs</h3>

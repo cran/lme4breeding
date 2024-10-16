@@ -125,7 +125,7 @@ indNames <- na.omit(unique(DT$Name))
 A <- diag(length(indNames))
 rownames(A) <- colnames(A) <- indNames
 
-# fit diagonal model first to produce H matrix
+# fit diagonal model first to produce a two-way table of genotype by env BLUPs
 Z <- with(DT, smm(Env))
 diagFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"), "|| Name)")
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
@@ -135,36 +135,34 @@ ans1a <- lmebreed(as.formula(diagFormula),
 vc <- VarCorr(ans1a); 
 H0 <- ranef(ans1a)$Name # GxE table
 
-# reduced rank model
+# Use the GxE table to obtain loadings and build loadings columns
 nPC=3
 Z <- with(DT,  rrm(Env, H = H0, nPC = nPC) ) 
 Zd <- with(DT, smm(Env) )
 faFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"),
                      "| Name) + (0+",paste(colnames(Zd), collapse = "+"), "|| Name)")
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
+# fit the FA model (rr + diag) to calculate factor scores
 ansFA <- lmebreed(as.formula(faFormula),
                   relmat = list(Name = A ),
                   verbose = FALSE, data=DT)
 
 u <- ranef(ansFA)$Name # all BLUPs
-scores <- as.matrix(u[,1:nPC])  # factor scores
+scores <- as.matrix(u[,1:nPC])  # extract factor scores
 loadings=with(DT, rrm(Env, nPC = nPC, H = H0, # lodings (latent covars)
                       returnGamma = TRUE) )$Gamma
 
-vc <- VarCorr(ansFA); print(vc,comp=c("Variance")) # Vcomps
-vcFA <- vc[[1]] # G of PCs
-vcDG <- diag( unlist(lapply(vc[2:16], function(x){x[[1]]})) ) # G of DG
-vcUS <- loadings %*% vcFA %*% t(loadings) # G of US
-G <- vcUS + vcDG # total G
+vc <- VarCorr(ansFA); print(vc,comp=c("Variance")) # extract all varcomps
+vcFA <- vc[[1]] # G of PCs only
+vcDG <- diag( unlist(lapply(vc[2:16], function(x){x[[1]]})) ) # G of diag model
+vcUS <- loadings %*% vcFA %*% t(loadings) # G of unstructured model
+G <- vcUS + vcDG # total G as the sum of both Gs
 colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
 hv <- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)
 
-uFA <- scores %*% t(loadings) # recover US effects
-uDG <- as.matrix(u[,(nPC+1):ncol(u)]) # recover DG effects 
+uFA <- scores %*% t(loadings) # recover UNS effects
+uDG <- as.matrix(u[,(nPC+1):ncol(u)]) # recover DIAG effects 
 u <- uFA + uDG # total effects
-
-
-
 
 
 ## -----------------------------------------------------------------------------
