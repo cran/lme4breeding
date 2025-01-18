@@ -7,7 +7,7 @@ lmebreed <-
            model = TRUE, x = TRUE, dateWarning=TRUE, returnParams=FALSE, 
            rotation=FALSE, coefOutRotation=8, ...)
   {
-    my.date <- "2025-01-01" # expiry date
+    my.date <- "2025-04-01" # expiry date
     your.date <- Sys.Date()
     ## if your month is greater than my month you are outdated
     if(dateWarning){
@@ -55,7 +55,18 @@ lmebreed <-
     ## DO TRANSFORMATION BEFORE EVALUATING THE CALL
     '%!in%' <- function(x,y)!('%in%'(x,y)) 
     response <- all.vars(formula)[1]
-    
+    # control to ignore relmats if there's no match with formula vars
+    if(length(relmat) > 0){
+      if( length(intersect(names(relmat), all.vars(formula) )) == 0){
+        relmat <- list()
+      }
+    }
+    # control to ignore addmats if there's no match with formula vars
+    if(length(addmat) > 0){
+      if( length(intersect(names(addmat), all.vars(formula) )) == 0){
+        addmat <- list()
+      }
+    }
     if( response %!in% colnames(data) ){stop("Response selected in your formula is not part of the dataset provided.", call. = FALSE)}
     goodRecords <- which(!is.na(data[,response]))
     udu <- list()

@@ -8,7 +8,7 @@
     stop("This package requires R 3.5.0 or later")
   if(interactive()) {
     packageStartupMessage(blue(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(blue(paste("[] Linear Mixed Equations 4 Breeding (lme4breeding) 1.0.4 (2025-01) []",sep="")),appendLF=TRUE)
+    packageStartupMessage(blue(paste("[] Linear Mixed Equations 4 Breeding (lme4breeding) 1.0.5 (2025-01) []",sep="")),appendLF=TRUE)
     packageStartupMessage(paste0(blue("[] Author: Giovanny Covarrubias-Pazaran",paste0(bgGreen(white(" ")), bgWhite(magenta("*")), bgRed(white(" "))),"                        []")),appendLF=TRUE)
     packageStartupMessage(blue("[] Dedicated to the University of Chapingo and UW-Madison           []"),appendLF=TRUE)
     packageStartupMessage(blue("[] Type 'vignette('lmebreed.gxe')' for a short tutorial             []"),appendLF=TRUE)
@@ -282,6 +282,38 @@ stackTrait <- function(data, traits){
   # varG <- apply(data[,traits],2,var, na.rm=TRUE) 
   mu <- apply(data[,traits],2,mean, na.rm=TRUE) 
   return(list(long=data2, varG=varG, mu=mu))
+}
+
+fillData <- function(data, toBalanceSplit=NULL, toBalanceFill=NULL){
+  if(is.null(toBalanceSplit)){stop("toBalanceSplit argument can not be NULL.",call. = FALSE)}
+  if(is.null(toBalanceFill)){stop("toBalanceFill argument can not be NULL.",call. = FALSE)}
+  levs <- levels(unique(as.factor(data[,toBalanceFill])))
+  subdata <- split(data, data[,toBalanceSplit])
+  subdata <- lapply(subdata, function(x){
+    missing <- setdiff(levs,unique(as.character(x[,toBalanceFill])))
+    tab <- table(x[,toBalanceFill])
+    tab <- tab[which(tab > 0)]
+    nRecords <- sort(tab, decreasing = TRUE)[1]
+    tab <- abs(tab - nRecords)
+    tab <- tab[which(tab > 0)]
+    tab <- data.frame(y=tab,z=names(tab))
+    toAdd <- unlist(apply(tab, 1, function(x){rep(x[2],x[1])}))
+    newX <- data.frame(c(rep(missing, nRecords), toAdd))
+    colnames(newX) <- toBalanceFill
+    addedCols <- setdiff(colnames(x), colnames(newX))
+    typesCols <- unlist(lapply(x, class))
+    for(iCol in addedCols){ # iCol = addedCols[1]
+      if(typesCols[iCol] %in% c("integer","numeric") ){
+        newX[,iCol] <- median(x[,iCol])
+      }
+      if(typesCols[iCol] %in% c("character","factor") ){
+        newX[,iCol] <- names(sort(table(x[,iCol]), decreasing = TRUE)[1])
+      }
+    }
+    return(rbind(x,newX))
+  })
+  final <- do.call(rbind, subdata)
+  return(final)
 }
 
 add.diallel.vars <- function(df, par1="Par1", par2="Par2",sep.cross="-"){
