@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2025-01-17" />
+<meta name="date" content="2025-04-28" />
 
 <title>Fitting genotype by environment models in lme4breeding</title>
 
@@ -342,7 +342,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Fitting genotype by environment models in
 lme4breeding</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2025-01-17</h4>
+<h4 class="date">2025-04-28</h4>
 
 
 
@@ -719,15 +719,10 @@ in GWAS and genomic prediction studies.</p>
 <span id="cb49-4"><a href="#cb49-4" tabindex="-1"></a><span class="do">## stage 2</span></span>
 <span id="cb49-5"><a href="#cb49-5" tabindex="-1"></a><span class="do">##########</span></span>
 <span id="cb49-6"><a href="#cb49-6" tabindex="-1"></a>DT2<span class="sc">$</span>w <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>DT2<span class="sc">$</span>stdError</span>
-<span id="cb49-7"><a href="#cb49-7" tabindex="-1"></a>ans2 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Estimate<span class="sc">~</span>Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Effect) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Env<span class="sc">:</span>Effect), <span class="at">weights =</span> w,<span class="at">data=</span>DT2, </span>
-<span id="cb49-8"><a href="#cb49-8" tabindex="-1"></a>                 <span class="at">control =</span> <span class="fu">lmerControl</span>(</span>
-<span id="cb49-9"><a href="#cb49-9" tabindex="-1"></a>                   <span class="co"># optimizer=&quot;bobyqa&quot;,</span></span>
-<span id="cb49-10"><a href="#cb49-10" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nlev =</span> <span class="st">&quot;ignore&quot;</span>,</span>
-<span id="cb49-11"><a href="#cb49-11" tabindex="-1"></a>                   <span class="at">check.nobs.vs.rankZ =</span> <span class="st">&quot;ignore&quot;</span>,</span>
-<span id="cb49-12"><a href="#cb49-12" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nRE=</span><span class="st">&quot;ignore&quot;</span></span>
-<span id="cb49-13"><a href="#cb49-13" tabindex="-1"></a>                 ), <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
-<span id="cb49-14"><a href="#cb49-14" tabindex="-1"></a>                 )</span>
-<span id="cb49-15"><a href="#cb49-15" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ans2); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<span id="cb49-7"><a href="#cb49-7" tabindex="-1"></a>ans2 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Estimate<span class="sc">~</span>Env <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Effect) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Env<span class="sc">:</span>Effect), <span class="at">weights =</span> w,</span>
+<span id="cb49-8"><a href="#cb49-8" tabindex="-1"></a>                 <span class="at">data=</span>DT2, <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb49-9"><a href="#cb49-9" tabindex="-1"></a>                 )</span>
+<span id="cb49-10"><a href="#cb49-10" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ans2); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups     Name        Variance
 ##  Env:Effect (Intercept) 2.91649 
 ##  Effect     (Intercept) 1.99225 

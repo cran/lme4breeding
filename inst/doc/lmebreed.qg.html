@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2025-01-17" />
+<meta name="date" content="2025-04-28" />
 
 <title>Quantitative genetics using the lme4breeding package</title>
 
@@ -342,7 +342,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Quantitative genetics using the
 lme4breeding package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2025-01-17</h4>
+<h4 class="date">2025-04-28</h4>
 
 
 
@@ -464,13 +464,9 @@ variance (with high marker density <span class="math inline">\(\sigma^2_A\)</spa
 ## P008 P008   8   1 2014 0.17406685 194.16     44.63  656.379    8    1</code></pre>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>mix1 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield<span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>id) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Rowf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Colf),</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                 <span class="at">relmat=</span><span class="fu">list</span>(<span class="at">id=</span>A),</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                 <span class="at">control =</span> <span class="fu">lmerControl</span>(</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nlev =</span> <span class="st">&quot;ignore&quot;</span>,</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>                   <span class="at">check.nobs.vs.rankZ =</span> <span class="st">&quot;ignore&quot;</span>,</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nRE=</span><span class="st">&quot;ignore&quot;</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>                 ),<span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>                 <span class="at">data=</span>DT)</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(mix1); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                 <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>                 <span class="at">data=</span>DT)</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(mix1); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
 ##  id       (Intercept)  806.26 
 ##  Colf     (Intercept)  198.43 
@@ -672,41 +668,35 @@ of TP, etc.</p>
 <span id="cb31-17"><a href="#cb31-17" tabindex="-1"></a><span class="co"># K &lt;- K + diag(1e-4, ncol(K), ncol(K) )</span></span>
 <span id="cb31-18"><a href="#cb31-18" tabindex="-1"></a><span class="co"># ans &lt;- lmebreed(X1 ~ (1|line), </span></span>
 <span id="cb31-19"><a href="#cb31-19" tabindex="-1"></a><span class="co">#                 relmat = list(line=K),</span></span>
-<span id="cb31-20"><a href="#cb31-20" tabindex="-1"></a><span class="co">#                 control = lmerControl(</span></span>
-<span id="cb31-21"><a href="#cb31-21" tabindex="-1"></a><span class="co">#                   check.nobs.vs.nlev = &quot;ignore&quot;,</span></span>
-<span id="cb31-22"><a href="#cb31-22" tabindex="-1"></a><span class="co">#                   check.nobs.vs.rankZ = &quot;ignore&quot;,</span></span>
-<span id="cb31-23"><a href="#cb31-23" tabindex="-1"></a><span class="co">#                   check.nobs.vs.nRE=&quot;ignore&quot;</span></span>
-<span id="cb31-24"><a href="#cb31-24" tabindex="-1"></a><span class="co">#                 ), verbose = FALSE,</span></span>
-<span id="cb31-25"><a href="#cb31-25" tabindex="-1"></a><span class="co">#                 data=y.trn)</span></span>
-<span id="cb31-26"><a href="#cb31-26" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ans); print(vc,comp=c(&quot;Variance&quot;))</span></span>
-<span id="cb31-27"><a href="#cb31-27" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb31-28"><a href="#cb31-28" tabindex="-1"></a><span class="co"># # take a extended dataset and fit a dummy model </span></span>
-<span id="cb31-29"><a href="#cb31-29" tabindex="-1"></a><span class="co"># # just to get required matrices</span></span>
-<span id="cb31-30"><a href="#cb31-30" tabindex="-1"></a><span class="co"># y.tst &lt;- y.trn; y.tst$X1 &lt;- imputev(y.tst$X1)</span></span>
-<span id="cb31-31"><a href="#cb31-31" tabindex="-1"></a><span class="co"># ans2 &lt;- update(ans, </span></span>
-<span id="cb31-32"><a href="#cb31-32" tabindex="-1"></a><span class="co">#                start = getME(ans, &quot;theta&quot;),</span></span>
-<span id="cb31-33"><a href="#cb31-33" tabindex="-1"></a><span class="co">#                data = y.tst,</span></span>
-<span id="cb31-34"><a href="#cb31-34" tabindex="-1"></a><span class="co">#                control = lmerControl(check.nobs.vs.nlev = &quot;ignore&quot;,</span></span>
-<span id="cb31-35"><a href="#cb31-35" tabindex="-1"></a><span class="co">#                                      check.nobs.vs.rankZ = &quot;ignore&quot;,</span></span>
-<span id="cb31-36"><a href="#cb31-36" tabindex="-1"></a><span class="co">#                                      check.nobs.vs.nRE=&quot;ignore&quot;,</span></span>
-<span id="cb31-37"><a href="#cb31-37" tabindex="-1"></a><span class="co">#                                      optCtrl = list(maxeval= 1),</span></span>
-<span id="cb31-38"><a href="#cb31-38" tabindex="-1"></a><span class="co">#                                      calc.derivs = FALSE))</span></span>
-<span id="cb31-39"><a href="#cb31-39" tabindex="-1"></a><span class="co"># # compute predictive ability</span></span>
-<span id="cb31-40"><a href="#cb31-40" tabindex="-1"></a><span class="co"># cor(ranef(ans2)$line[vv,],DT[vv,&quot;X1&quot;], use=&quot;complete&quot;)</span></span>
-<span id="cb31-41"><a href="#cb31-41" tabindex="-1"></a><span class="co"># # # other approach</span></span>
-<span id="cb31-42"><a href="#cb31-42" tabindex="-1"></a><span class="co"># # mme &lt;- getMME(ans2, vc=vc, recordsToKeep = which(!is.na(y.trn$X1)))</span></span>
-<span id="cb31-43"><a href="#cb31-43" tabindex="-1"></a><span class="co"># # cor(mme$bu[vv,],DT[vv,&quot;X1&quot;], use=&quot;complete&quot;)</span></span>
-<span id="cb31-44"><a href="#cb31-44" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb31-45"><a href="#cb31-45" tabindex="-1"></a><span class="co"># ## rrBLUP</span></span>
-<span id="cb31-46"><a href="#cb31-46" tabindex="-1"></a><span class="co"># M &lt;- tcrossprod(GT)</span></span>
-<span id="cb31-47"><a href="#cb31-47" tabindex="-1"></a><span class="co"># xx &lt;- with(y.trn, redmm(x=line, M=M, nPC=100, returnLam = TRUE))</span></span>
-<span id="cb31-48"><a href="#cb31-48" tabindex="-1"></a><span class="co"># custom &lt;- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]</span></span>
-<span id="cb31-49"><a href="#cb31-49" tabindex="-1"></a><span class="co"># ansRRBLUP &lt;- lmebreed(X1 ~ (1|custom), verbose = FALSE,</span></span>
-<span id="cb31-50"><a href="#cb31-50" tabindex="-1"></a><span class="co">#                       addmat = list(custom=Z),</span></span>
-<span id="cb31-51"><a href="#cb31-51" tabindex="-1"></a><span class="co">#                       data=y.trn)</span></span>
-<span id="cb31-52"><a href="#cb31-52" tabindex="-1"></a><span class="co"># re &lt;- ranef(ansRRBLUP)$custom</span></span>
-<span id="cb31-53"><a href="#cb31-53" tabindex="-1"></a><span class="co"># u = tcrossprod(xx$Lam, t(as.matrix( re[colnames(xx$Lam),] ) ))</span></span>
-<span id="cb31-54"><a href="#cb31-54" tabindex="-1"></a><span class="co"># cor(u[vv,],DT[vv,&quot;X1&quot;], use=&quot;complete&quot;)</span></span></code></pre></div>
+<span id="cb31-20"><a href="#cb31-20" tabindex="-1"></a><span class="co">#                 verbose = FALSE,</span></span>
+<span id="cb31-21"><a href="#cb31-21" tabindex="-1"></a><span class="co">#                 data=y.trn)</span></span>
+<span id="cb31-22"><a href="#cb31-22" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(ans); print(vc,comp=c(&quot;Variance&quot;))</span></span>
+<span id="cb31-23"><a href="#cb31-23" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb31-24"><a href="#cb31-24" tabindex="-1"></a><span class="co"># # take a extended dataset and fit a dummy model </span></span>
+<span id="cb31-25"><a href="#cb31-25" tabindex="-1"></a><span class="co"># # just to get required matrices</span></span>
+<span id="cb31-26"><a href="#cb31-26" tabindex="-1"></a><span class="co"># y.tst &lt;- y.trn; y.tst$X1 &lt;- imputev(y.tst$X1)</span></span>
+<span id="cb31-27"><a href="#cb31-27" tabindex="-1"></a><span class="co"># ans2 &lt;- update(ans, </span></span>
+<span id="cb31-28"><a href="#cb31-28" tabindex="-1"></a><span class="co">#                start = getME(ans, &quot;theta&quot;),</span></span>
+<span id="cb31-29"><a href="#cb31-29" tabindex="-1"></a><span class="co">#                data = y.tst,</span></span>
+<span id="cb31-30"><a href="#cb31-30" tabindex="-1"></a><span class="co">#                control = lmerControl(</span></span>
+<span id="cb31-31"><a href="#cb31-31" tabindex="-1"></a><span class="co">#                                      optCtrl = list(maxeval= 1),</span></span>
+<span id="cb31-32"><a href="#cb31-32" tabindex="-1"></a><span class="co">#                                      calc.derivs = FALSE))</span></span>
+<span id="cb31-33"><a href="#cb31-33" tabindex="-1"></a><span class="co"># # compute predictive ability</span></span>
+<span id="cb31-34"><a href="#cb31-34" tabindex="-1"></a><span class="co"># cor(ranef(ans2)$line[vv,],DT[vv,&quot;X1&quot;], use=&quot;complete&quot;)</span></span>
+<span id="cb31-35"><a href="#cb31-35" tabindex="-1"></a><span class="co"># # # other approach</span></span>
+<span id="cb31-36"><a href="#cb31-36" tabindex="-1"></a><span class="co"># # mme &lt;- getMME(ans2, vc=vc, recordsToKeep = which(!is.na(y.trn$X1)))</span></span>
+<span id="cb31-37"><a href="#cb31-37" tabindex="-1"></a><span class="co"># # cor(mme$bu[vv,],DT[vv,&quot;X1&quot;], use=&quot;complete&quot;)</span></span>
+<span id="cb31-38"><a href="#cb31-38" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb31-39"><a href="#cb31-39" tabindex="-1"></a><span class="co"># ## rrBLUP</span></span>
+<span id="cb31-40"><a href="#cb31-40" tabindex="-1"></a><span class="co"># M &lt;- tcrossprod(GT)</span></span>
+<span id="cb31-41"><a href="#cb31-41" tabindex="-1"></a><span class="co"># xx &lt;- with(y.trn, redmm(x=line, M=M, nPC=100, returnLam = TRUE))</span></span>
+<span id="cb31-42"><a href="#cb31-42" tabindex="-1"></a><span class="co"># custom &lt;- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]</span></span>
+<span id="cb31-43"><a href="#cb31-43" tabindex="-1"></a><span class="co"># ansRRBLUP &lt;- lmebreed(X1 ~ (1|custom), verbose = FALSE,</span></span>
+<span id="cb31-44"><a href="#cb31-44" tabindex="-1"></a><span class="co">#                       addmat = list(custom=Z),</span></span>
+<span id="cb31-45"><a href="#cb31-45" tabindex="-1"></a><span class="co">#                       data=y.trn)</span></span>
+<span id="cb31-46"><a href="#cb31-46" tabindex="-1"></a><span class="co"># re &lt;- ranef(ansRRBLUP)$custom</span></span>
+<span id="cb31-47"><a href="#cb31-47" tabindex="-1"></a><span class="co"># u = tcrossprod(xx$Lam, t(as.matrix( re[colnames(xx$Lam),] ) ))</span></span>
+<span id="cb31-48"><a href="#cb31-48" tabindex="-1"></a><span class="co"># cor(u[vv,],DT[vv,&quot;X1&quot;], use=&quot;complete&quot;)</span></span></code></pre></div>
 </div>
 <div id="indirect-genetic-effects" class="section level3">
 <h3>5) Indirect genetic effects</h3>
@@ -788,26 +778,24 @@ to show how to do prediction of single crosses.</p>
 <span id="cb33-23"><a href="#cb33-23" tabindex="-1"></a><span class="co"># ans2p &lt;- update(ans2, </span></span>
 <span id="cb33-24"><a href="#cb33-24" tabindex="-1"></a><span class="co">#                 start = getME(ans2, &quot;theta&quot;),</span></span>
 <span id="cb33-25"><a href="#cb33-25" tabindex="-1"></a><span class="co">#                 data = y.tst,</span></span>
-<span id="cb33-26"><a href="#cb33-26" tabindex="-1"></a><span class="co">#                 control = lmerControl(check.nobs.vs.nlev = &quot;ignore&quot;,</span></span>
-<span id="cb33-27"><a href="#cb33-27" tabindex="-1"></a><span class="co">#                                       check.nobs.vs.rankZ = &quot;ignore&quot;,</span></span>
-<span id="cb33-28"><a href="#cb33-28" tabindex="-1"></a><span class="co">#                                       check.nobs.vs.nRE=&quot;ignore&quot;,</span></span>
-<span id="cb33-29"><a href="#cb33-29" tabindex="-1"></a><span class="co">#                                       optCtrl = list(maxeval= 1),</span></span>
-<span id="cb33-30"><a href="#cb33-30" tabindex="-1"></a><span class="co">#                                       calc.derivs = FALSE))</span></span>
+<span id="cb33-26"><a href="#cb33-26" tabindex="-1"></a><span class="co">#                 control = lmerControl(</span></span>
+<span id="cb33-27"><a href="#cb33-27" tabindex="-1"></a><span class="co">#                                       optCtrl = list(maxeval= 1),</span></span>
+<span id="cb33-28"><a href="#cb33-28" tabindex="-1"></a><span class="co">#                                       calc.derivs = FALSE))</span></span>
+<span id="cb33-29"><a href="#cb33-29" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb33-30"><a href="#cb33-30" tabindex="-1"></a><span class="co"># re &lt;- ranef(ans2p)</span></span>
 <span id="cb33-31"><a href="#cb33-31" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb33-32"><a href="#cb33-32" tabindex="-1"></a><span class="co"># re &lt;- ranef(ans2p)</span></span>
-<span id="cb33-33"><a href="#cb33-33" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb33-34"><a href="#cb33-34" tabindex="-1"></a><span class="co"># Pdent &lt;- as.matrix(re$dent[,1,drop=FALSE]) %*% Matrix(1, ncol=nrow(re$flint), nrow=1)</span></span>
-<span id="cb33-35"><a href="#cb33-35" tabindex="-1"></a><span class="co"># Pflint &lt;- as.matrix(re$flint[,1,drop=FALSE]) %*% Matrix(1, ncol=nrow(re$dent), nrow=1)</span></span>
-<span id="cb33-36"><a href="#cb33-36" tabindex="-1"></a><span class="co"># P &lt;- Pdent + t(Pflint); colnames(P) &lt;- rownames(re$flint)</span></span>
-<span id="cb33-37"><a href="#cb33-37" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb33-38"><a href="#cb33-38" tabindex="-1"></a><span class="co"># preds &lt;- real &lt;- numeric()</span></span>
-<span id="cb33-39"><a href="#cb33-39" tabindex="-1"></a><span class="co"># for(iHyb in vv2){ </span></span>
-<span id="cb33-40"><a href="#cb33-40" tabindex="-1"></a><span class="co">#   parents &lt;- strsplit(iHyb,&quot;:&quot;)[[1]]</span></span>
-<span id="cb33-41"><a href="#cb33-41" tabindex="-1"></a><span class="co">#   preds[iHyb] &lt;- P[which(rownames(P) %in% parents),which(colnames(P) %in% parents)]</span></span>
-<span id="cb33-42"><a href="#cb33-42" tabindex="-1"></a><span class="co">#   real[iHyb] &lt;- DT[which(DT$hy == iHyb),&quot;GY&quot;]</span></span>
-<span id="cb33-43"><a href="#cb33-43" tabindex="-1"></a><span class="co"># }</span></span>
-<span id="cb33-44"><a href="#cb33-44" tabindex="-1"></a><span class="co"># plot(preds, real)</span></span>
-<span id="cb33-45"><a href="#cb33-45" tabindex="-1"></a><span class="co"># cor(preds, real)</span></span></code></pre></div>
+<span id="cb33-32"><a href="#cb33-32" tabindex="-1"></a><span class="co"># Pdent &lt;- as.matrix(re$dent[,1,drop=FALSE]) %*% Matrix(1, ncol=nrow(re$flint), nrow=1)</span></span>
+<span id="cb33-33"><a href="#cb33-33" tabindex="-1"></a><span class="co"># Pflint &lt;- as.matrix(re$flint[,1,drop=FALSE]) %*% Matrix(1, ncol=nrow(re$dent), nrow=1)</span></span>
+<span id="cb33-34"><a href="#cb33-34" tabindex="-1"></a><span class="co"># P &lt;- Pdent + t(Pflint); colnames(P) &lt;- rownames(re$flint)</span></span>
+<span id="cb33-35"><a href="#cb33-35" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb33-36"><a href="#cb33-36" tabindex="-1"></a><span class="co"># preds &lt;- real &lt;- numeric()</span></span>
+<span id="cb33-37"><a href="#cb33-37" tabindex="-1"></a><span class="co"># for(iHyb in vv2){ </span></span>
+<span id="cb33-38"><a href="#cb33-38" tabindex="-1"></a><span class="co">#   parents &lt;- strsplit(iHyb,&quot;:&quot;)[[1]]</span></span>
+<span id="cb33-39"><a href="#cb33-39" tabindex="-1"></a><span class="co">#   preds[iHyb] &lt;- P[which(rownames(P) %in% parents),which(colnames(P) %in% parents)]</span></span>
+<span id="cb33-40"><a href="#cb33-40" tabindex="-1"></a><span class="co">#   real[iHyb] &lt;- DT[which(DT$hy == iHyb),&quot;GY&quot;]</span></span>
+<span id="cb33-41"><a href="#cb33-41" tabindex="-1"></a><span class="co"># }</span></span>
+<span id="cb33-42"><a href="#cb33-42" tabindex="-1"></a><span class="co"># plot(preds, real)</span></span>
+<span id="cb33-43"><a href="#cb33-43" tabindex="-1"></a><span class="co"># cor(preds, real)</span></span></code></pre></div>
 <p>In the previous model we only used the GCA effects (GCA1 and GCA2)
 for practicity, altough it’s been shown that the SCA effect doesn’t
 actually help that much in increasing prediction accuracy, but does
@@ -854,13 +842,9 @@ spline model.</p>
 <span id="cb34-12"><a href="#cb34-12" tabindex="-1"></a><span class="co"># fit model</span></span>
 <span id="cb34-13"><a href="#cb34-13" tabindex="-1"></a>mix1 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield<span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>Rowf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Colf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>spatial),</span>
 <span id="cb34-14"><a href="#cb34-14" tabindex="-1"></a>                 <span class="at">addmat =</span><span class="fu">list</span>(<span class="at">spatial=</span>Z),</span>
-<span id="cb34-15"><a href="#cb34-15" tabindex="-1"></a>                 <span class="at">control =</span> <span class="fu">lmerControl</span>(</span>
-<span id="cb34-16"><a href="#cb34-16" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nlev =</span> <span class="st">&quot;ignore&quot;</span>,</span>
-<span id="cb34-17"><a href="#cb34-17" tabindex="-1"></a>                   <span class="at">check.nobs.vs.rankZ =</span> <span class="st">&quot;ignore&quot;</span>,</span>
-<span id="cb34-18"><a href="#cb34-18" tabindex="-1"></a>                   <span class="at">check.nobs.vs.nRE=</span><span class="st">&quot;ignore&quot;</span></span>
-<span id="cb34-19"><a href="#cb34-19" tabindex="-1"></a>                 ), <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb34-20"><a href="#cb34-20" tabindex="-1"></a>                 <span class="at">data=</span>DT)</span>
-<span id="cb34-21"><a href="#cb34-21" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(mix1); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<span id="cb34-15"><a href="#cb34-15" tabindex="-1"></a>                 <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb34-16"><a href="#cb34-16" tabindex="-1"></a>                 <span class="at">data=</span>DT)</span>
+<span id="cb34-17"><a href="#cb34-17" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(mix1); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
 ##  spatial  (Intercept)  320.61 
 ##  Colf     (Intercept)  158.29 
@@ -892,14 +876,9 @@ covariance among traits.</p>
 <span id="cb36-11"><a href="#cb36-11" tabindex="-1"></a><span class="co"># head(DT2$long)</span></span>
 <span id="cb36-12"><a href="#cb36-12" tabindex="-1"></a><span class="co"># </span></span>
 <span id="cb36-13"><a href="#cb36-13" tabindex="-1"></a><span class="co"># mix1 &lt;- lmebreed(valueS~ (0+trait|id),</span></span>
-<span id="cb36-14"><a href="#cb36-14" tabindex="-1"></a><span class="co">#                  relmat=list(id=A),</span></span>
-<span id="cb36-15"><a href="#cb36-15" tabindex="-1"></a><span class="co">#                  control = lmerControl(</span></span>
-<span id="cb36-16"><a href="#cb36-16" tabindex="-1"></a><span class="co">#                    check.nobs.vs.nlev = &quot;ignore&quot;,</span></span>
-<span id="cb36-17"><a href="#cb36-17" tabindex="-1"></a><span class="co">#                    check.nobs.vs.rankZ = &quot;ignore&quot;,</span></span>
-<span id="cb36-18"><a href="#cb36-18" tabindex="-1"></a><span class="co">#                    check.nobs.vs.nRE=&quot;ignore&quot;</span></span>
-<span id="cb36-19"><a href="#cb36-19" tabindex="-1"></a><span class="co">#                  ), verbose = FALSE,</span></span>
-<span id="cb36-20"><a href="#cb36-20" tabindex="-1"></a><span class="co">#                  data=DT2$long)</span></span>
-<span id="cb36-21"><a href="#cb36-21" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(mix1); print(vc,comp=c(&quot;Variance&quot;))</span></span></code></pre></div>
+<span id="cb36-14"><a href="#cb36-14" tabindex="-1"></a><span class="co">#                  relmat=list(id=A), verbose = FALSE,</span></span>
+<span id="cb36-15"><a href="#cb36-15" tabindex="-1"></a><span class="co">#                  data=DT2$long)</span></span>
+<span id="cb36-16"><a href="#cb36-16" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(mix1); print(vc,comp=c(&quot;Variance&quot;))</span></span></code></pre></div>
 <p>Now you can extract the BLUPs using <code>ranef(ans.m)</code>. Also,
 genetic correlations and heritabilities can be calculated easily.</p>
 <div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a><span class="co"># cov2cor(vc$id)</span></span></code></pre></div>
@@ -928,17 +907,13 @@ show a very easy example using the DT_cpdata:</p>
 <span id="cb38-12"><a href="#cb38-12" tabindex="-1"></a><span class="co"># </span></span>
 <span id="cb38-13"><a href="#cb38-13" tabindex="-1"></a><span class="co"># mix.part &lt;- lmebreed(color ~ (1|id),</span></span>
 <span id="cb38-14"><a href="#cb38-14" tabindex="-1"></a><span class="co">#                      relmat = list(id=MMT),</span></span>
-<span id="cb38-15"><a href="#cb38-15" tabindex="-1"></a><span class="co">#                      control = lmerControl(</span></span>
-<span id="cb38-16"><a href="#cb38-16" tabindex="-1"></a><span class="co">#                        check.nobs.vs.nlev = &quot;ignore&quot;,</span></span>
-<span id="cb38-17"><a href="#cb38-17" tabindex="-1"></a><span class="co">#                        check.nobs.vs.rankZ = &quot;ignore&quot;,</span></span>
-<span id="cb38-18"><a href="#cb38-18" tabindex="-1"></a><span class="co">#                        check.nobs.vs.nRE=&quot;ignore&quot;</span></span>
-<span id="cb38-19"><a href="#cb38-19" tabindex="-1"></a><span class="co">#                      ), verbose = FALSE,</span></span>
-<span id="cb38-20"><a href="#cb38-20" tabindex="-1"></a><span class="co">#                      data=DT)</span></span>
-<span id="cb38-21"><a href="#cb38-21" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb38-22"><a href="#cb38-22" tabindex="-1"></a><span class="co"># #convert BLUPs to marker effects me=M&#39;(M&#39;M)- u</span></span>
-<span id="cb38-23"><a href="#cb38-23" tabindex="-1"></a><span class="co"># re &lt;- ranef(mix.part)$id</span></span>
-<span id="cb38-24"><a href="#cb38-24" tabindex="-1"></a><span class="co"># me.part&lt;-MTMMTinv[,rownames(re)]%*%matrix(re[,1],ncol=1)</span></span>
-<span id="cb38-25"><a href="#cb38-25" tabindex="-1"></a><span class="co"># plot(me.part)</span></span></code></pre></div>
+<span id="cb38-15"><a href="#cb38-15" tabindex="-1"></a><span class="co">#                      verbose = FALSE,</span></span>
+<span id="cb38-16"><a href="#cb38-16" tabindex="-1"></a><span class="co">#                      data=DT)</span></span>
+<span id="cb38-17"><a href="#cb38-17" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb38-18"><a href="#cb38-18" tabindex="-1"></a><span class="co"># #convert BLUPs to marker effects me=M&#39;(M&#39;M)- u</span></span>
+<span id="cb38-19"><a href="#cb38-19" tabindex="-1"></a><span class="co"># re &lt;- ranef(mix.part)$id</span></span>
+<span id="cb38-20"><a href="#cb38-20" tabindex="-1"></a><span class="co"># me.part&lt;-MTMMTinv[,rownames(re)]%*%matrix(re[,1],ncol=1)</span></span>
+<span id="cb38-21"><a href="#cb38-21" tabindex="-1"></a><span class="co"># plot(me.part)</span></span></code></pre></div>
 <p>As can be seen, these two models are equivalent with the exception
 that the partitioned model is more computationally efficient.</p>
 </div>
@@ -972,34 +947,26 @@ inverted easily and make multitrait models more feasible.</p>
 <span id="cb39-20"><a href="#cb39-20" tabindex="-1"></a><span class="co"># </span></span>
 <span id="cb39-21"><a href="#cb39-21" tabindex="-1"></a><span class="co"># modeld &lt;- lmebreed(X1~ UX + (1|id),</span></span>
 <span id="cb39-22"><a href="#cb39-22" tabindex="-1"></a><span class="co">#                  relmat=list(id=D),</span></span>
-<span id="cb39-23"><a href="#cb39-23" tabindex="-1"></a><span class="co">#                  control = lmerControl(</span></span>
-<span id="cb39-24"><a href="#cb39-24" tabindex="-1"></a><span class="co">#                    check.nobs.vs.nlev = &quot;ignore&quot;,</span></span>
-<span id="cb39-25"><a href="#cb39-25" tabindex="-1"></a><span class="co">#                    check.nobs.vs.rankZ = &quot;ignore&quot;,</span></span>
-<span id="cb39-26"><a href="#cb39-26" tabindex="-1"></a><span class="co">#                    check.nobs.vs.nRE=&quot;ignore&quot;</span></span>
-<span id="cb39-27"><a href="#cb39-27" tabindex="-1"></a><span class="co">#                  ), verbose = FALSE,</span></span>
-<span id="cb39-28"><a href="#cb39-28" tabindex="-1"></a><span class="co">#                  data=DTd)</span></span>
-<span id="cb39-29"><a href="#cb39-29" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(modeld); print(vc,comp=c(&quot;Variance&quot;))</span></span>
+<span id="cb39-23"><a href="#cb39-23" tabindex="-1"></a><span class="co">#                  verbose = FALSE,</span></span>
+<span id="cb39-24"><a href="#cb39-24" tabindex="-1"></a><span class="co">#                  data=DTd)</span></span>
+<span id="cb39-25"><a href="#cb39-25" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(modeld); print(vc,comp=c(&quot;Variance&quot;))</span></span>
+<span id="cb39-26"><a href="#cb39-26" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb39-27"><a href="#cb39-27" tabindex="-1"></a><span class="co"># # dataset for normal model</span></span>
+<span id="cb39-28"><a href="#cb39-28" tabindex="-1"></a><span class="co"># DTn&lt;-data.frame(id = rownames(G) , DT_wheat)</span></span>
+<span id="cb39-29"><a href="#cb39-29" tabindex="-1"></a><span class="co"># DTn$id&lt;-as.character(DTn$id)</span></span>
 <span id="cb39-30"><a href="#cb39-30" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb39-31"><a href="#cb39-31" tabindex="-1"></a><span class="co"># # dataset for normal model</span></span>
-<span id="cb39-32"><a href="#cb39-32" tabindex="-1"></a><span class="co"># DTn&lt;-data.frame(id = rownames(G) , DT_wheat)</span></span>
-<span id="cb39-33"><a href="#cb39-33" tabindex="-1"></a><span class="co"># DTn$id&lt;-as.character(DTn$id)</span></span>
-<span id="cb39-34"><a href="#cb39-34" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb39-35"><a href="#cb39-35" tabindex="-1"></a><span class="co"># modeln &lt;- lmebreed(X1~ (1|id),</span></span>
-<span id="cb39-36"><a href="#cb39-36" tabindex="-1"></a><span class="co">#                    relmat=list(id=G),</span></span>
-<span id="cb39-37"><a href="#cb39-37" tabindex="-1"></a><span class="co">#                    control = lmerControl(</span></span>
-<span id="cb39-38"><a href="#cb39-38" tabindex="-1"></a><span class="co">#                      check.nobs.vs.nlev = &quot;ignore&quot;,</span></span>
-<span id="cb39-39"><a href="#cb39-39" tabindex="-1"></a><span class="co">#                      check.nobs.vs.rankZ = &quot;ignore&quot;,</span></span>
-<span id="cb39-40"><a href="#cb39-40" tabindex="-1"></a><span class="co">#                      check.nobs.vs.nRE=&quot;ignore&quot;</span></span>
-<span id="cb39-41"><a href="#cb39-41" tabindex="-1"></a><span class="co">#                    ), verbose = FALSE,</span></span>
-<span id="cb39-42"><a href="#cb39-42" tabindex="-1"></a><span class="co">#                    data=DTn)</span></span>
-<span id="cb39-43"><a href="#cb39-43" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb39-44"><a href="#cb39-44" tabindex="-1"></a><span class="co"># ## compare regular and transformed blups</span></span>
-<span id="cb39-45"><a href="#cb39-45" tabindex="-1"></a><span class="co"># red &lt;- ranef(modeld)$id</span></span>
-<span id="cb39-46"><a href="#cb39-46" tabindex="-1"></a><span class="co"># ren &lt;- ranef(modeln)$id</span></span>
-<span id="cb39-47"><a href="#cb39-47" tabindex="-1"></a><span class="co"># plot(x=(solve(t(U)))%*%  red[colnames(D),],</span></span>
-<span id="cb39-48"><a href="#cb39-48" tabindex="-1"></a><span class="co">#      y=ren[colnames(D),], </span></span>
-<span id="cb39-49"><a href="#cb39-49" tabindex="-1"></a><span class="co">#      xlab=&quot;UDU blup&quot;, ylab=&quot;blup&quot;)</span></span>
-<span id="cb39-50"><a href="#cb39-50" tabindex="-1"></a><span class="co"># </span></span></code></pre></div>
+<span id="cb39-31"><a href="#cb39-31" tabindex="-1"></a><span class="co"># modeln &lt;- lmebreed(X1~ (1|id),</span></span>
+<span id="cb39-32"><a href="#cb39-32" tabindex="-1"></a><span class="co">#                    relmat=list(id=G),</span></span>
+<span id="cb39-33"><a href="#cb39-33" tabindex="-1"></a><span class="co">#                    verbose = FALSE,</span></span>
+<span id="cb39-34"><a href="#cb39-34" tabindex="-1"></a><span class="co">#                    data=DTn)</span></span>
+<span id="cb39-35"><a href="#cb39-35" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb39-36"><a href="#cb39-36" tabindex="-1"></a><span class="co"># ## compare regular and transformed blups</span></span>
+<span id="cb39-37"><a href="#cb39-37" tabindex="-1"></a><span class="co"># red &lt;- ranef(modeld)$id</span></span>
+<span id="cb39-38"><a href="#cb39-38" tabindex="-1"></a><span class="co"># ren &lt;- ranef(modeln)$id</span></span>
+<span id="cb39-39"><a href="#cb39-39" tabindex="-1"></a><span class="co"># plot(x=(solve(t(U)))%*%  red[colnames(D),],</span></span>
+<span id="cb39-40"><a href="#cb39-40" tabindex="-1"></a><span class="co">#      y=ren[colnames(D),], </span></span>
+<span id="cb39-41"><a href="#cb39-41" tabindex="-1"></a><span class="co">#      xlab=&quot;UDU blup&quot;, ylab=&quot;blup&quot;)</span></span>
+<span id="cb39-42"><a href="#cb39-42" tabindex="-1"></a><span class="co"># </span></span></code></pre></div>
 <p>As can be seen, the two models are equivalent. The lme4breeding
 library uses this trick directly by setting the argument
 rotation=TRUE.</p>
@@ -1195,23 +1162,19 @@ their standard errors from the genotype effects.</p>
 <span id="cb59-8"><a href="#cb59-8" tabindex="-1"></a><span class="co"># </span></span>
 <span id="cb59-9"><a href="#cb59-9" tabindex="-1"></a><span class="co"># mix.part &lt;- lmebreed(color ~ (1|id) + (1|Rowf) + (1|Colf),</span></span>
 <span id="cb59-10"><a href="#cb59-10" tabindex="-1"></a><span class="co">#                      relmat = list(id=MMT),</span></span>
-<span id="cb59-11"><a href="#cb59-11" tabindex="-1"></a><span class="co">#                      control = lmerControl(</span></span>
-<span id="cb59-12"><a href="#cb59-12" tabindex="-1"></a><span class="co">#                        check.nobs.vs.nlev = &quot;ignore&quot;,</span></span>
-<span id="cb59-13"><a href="#cb59-13" tabindex="-1"></a><span class="co">#                        check.nobs.vs.rankZ = &quot;ignore&quot;,</span></span>
-<span id="cb59-14"><a href="#cb59-14" tabindex="-1"></a><span class="co">#                        check.nobs.vs.nRE=&quot;ignore&quot;</span></span>
-<span id="cb59-15"><a href="#cb59-15" tabindex="-1"></a><span class="co">#                      ), verbose = FALSE,</span></span>
-<span id="cb59-16"><a href="#cb59-16" tabindex="-1"></a><span class="co">#                      data=DT)</span></span>
-<span id="cb59-17"><a href="#cb59-17" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(mix.part); print(vc,comp=c(&quot;Variance&quot;))</span></span>
-<span id="cb59-18"><a href="#cb59-18" tabindex="-1"></a><span class="co"># mme &lt;- getMME(object=mix.part)</span></span>
-<span id="cb59-19"><a href="#cb59-19" tabindex="-1"></a><span class="co"># #convert BLUPs to marker effects me=M&#39;(M&#39;M)- u</span></span>
-<span id="cb59-20"><a href="#cb59-20" tabindex="-1"></a><span class="co"># re &lt;- ranef(mix.part)$id</span></span>
-<span id="cb59-21"><a href="#cb59-21" tabindex="-1"></a><span class="co"># a.from.g&lt;-MTMMTinv[,rownames(re)]%*%matrix(re[,1],ncol=1)</span></span>
-<span id="cb59-22"><a href="#cb59-22" tabindex="-1"></a><span class="co"># var.g &lt;- kronecker(MMT[rownames(re),rownames(re)],vc$id) - </span></span>
-<span id="cb59-23"><a href="#cb59-23" tabindex="-1"></a><span class="co">#   mme$Ci[rownames(re),rownames(re) ]</span></span>
-<span id="cb59-24"><a href="#cb59-24" tabindex="-1"></a><span class="co"># var.a.from.g &lt;- t(M)%*%MMTinv[,rownames(re)]%*% (var.g) %*% t(MMTinv[,rownames(re)])%*%M</span></span>
-<span id="cb59-25"><a href="#cb59-25" tabindex="-1"></a><span class="co"># se.a.from.g &lt;- sqrt(diag(var.a.from.g))</span></span>
-<span id="cb59-26"><a href="#cb59-26" tabindex="-1"></a><span class="co"># t.stat.from.g &lt;- a.from.g/se.a.from.g # t-statistic</span></span>
-<span id="cb59-27"><a href="#cb59-27" tabindex="-1"></a><span class="co"># pvalGBLUP &lt;- dt(t.stat.from.g,df=n-k-1) # -log10(pval)</span></span></code></pre></div>
+<span id="cb59-11"><a href="#cb59-11" tabindex="-1"></a><span class="co">#                      verbose = FALSE,</span></span>
+<span id="cb59-12"><a href="#cb59-12" tabindex="-1"></a><span class="co">#                      data=DT)</span></span>
+<span id="cb59-13"><a href="#cb59-13" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(mix.part); print(vc,comp=c(&quot;Variance&quot;))</span></span>
+<span id="cb59-14"><a href="#cb59-14" tabindex="-1"></a><span class="co"># mme &lt;- getMME(object=mix.part)</span></span>
+<span id="cb59-15"><a href="#cb59-15" tabindex="-1"></a><span class="co"># #convert BLUPs to marker effects me=M&#39;(M&#39;M)- u</span></span>
+<span id="cb59-16"><a href="#cb59-16" tabindex="-1"></a><span class="co"># re &lt;- ranef(mix.part)$id</span></span>
+<span id="cb59-17"><a href="#cb59-17" tabindex="-1"></a><span class="co"># a.from.g&lt;-MTMMTinv[,rownames(re)]%*%matrix(re[,1],ncol=1)</span></span>
+<span id="cb59-18"><a href="#cb59-18" tabindex="-1"></a><span class="co"># var.g &lt;- kronecker(MMT[rownames(re),rownames(re)],vc$id) - </span></span>
+<span id="cb59-19"><a href="#cb59-19" tabindex="-1"></a><span class="co">#   mme$Ci[rownames(re),rownames(re) ]</span></span>
+<span id="cb59-20"><a href="#cb59-20" tabindex="-1"></a><span class="co"># var.a.from.g &lt;- t(M)%*%MMTinv[,rownames(re)]%*% (var.g) %*% t(MMTinv[,rownames(re)])%*%M</span></span>
+<span id="cb59-21"><a href="#cb59-21" tabindex="-1"></a><span class="co"># se.a.from.g &lt;- sqrt(diag(var.a.from.g))</span></span>
+<span id="cb59-22"><a href="#cb59-22" tabindex="-1"></a><span class="co"># t.stat.from.g &lt;- a.from.g/se.a.from.g # t-statistic</span></span>
+<span id="cb59-23"><a href="#cb59-23" tabindex="-1"></a><span class="co"># pvalGBLUP &lt;- dt(t.stat.from.g,df=n-k-1) # -log10(pval)</span></span></code></pre></div>
 <p>Now we can look at the p-values coming from the 3 approaches to
 indeed show that results are equivalent.</p>
 <div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" tabindex="-1"></a><span class="co"># plot(-log(pvalGBLUP), main=&quot;GWAS by GBLUP&quot;)</span></span></code></pre></div>

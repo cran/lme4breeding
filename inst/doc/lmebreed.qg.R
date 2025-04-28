@@ -28,11 +28,7 @@ A <- A + diag(1e-4, ncol(A), ncol(A))
 head(DT)
 mix1 <- lmebreed(Yield~ (1|id) + (1|Rowf) + (1|Colf),
                  relmat=list(id=A),
-                 control = lmerControl(
-                   check.nobs.vs.nlev = "ignore",
-                   check.nobs.vs.rankZ = "ignore",
-                   check.nobs.vs.nRE="ignore"
-                 ),verbose = FALSE,
+                 verbose = FALSE,
                  data=DT)
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 ve <- attr(VarCorr(mix1), "sc")^2
@@ -111,11 +107,7 @@ ve <- attr(vc, "sc")^2;ve
 # K <- K + diag(1e-4, ncol(K), ncol(K) )
 # ans <- lmebreed(X1 ~ (1|line), 
 #                 relmat = list(line=K),
-#                 control = lmerControl(
-#                   check.nobs.vs.nlev = "ignore",
-#                   check.nobs.vs.rankZ = "ignore",
-#                   check.nobs.vs.nRE="ignore"
-#                 ), verbose = FALSE,
+#                 verbose = FALSE,
 #                 data=y.trn)
 # vc <- VarCorr(ans); print(vc,comp=c("Variance"))
 # 
@@ -125,9 +117,7 @@ ve <- attr(vc, "sc")^2;ve
 # ans2 <- update(ans, 
 #                start = getME(ans, "theta"),
 #                data = y.tst,
-#                control = lmerControl(check.nobs.vs.nlev = "ignore",
-#                                      check.nobs.vs.rankZ = "ignore",
-#                                      check.nobs.vs.nRE="ignore",
+#                control = lmerControl(
 #                                      optCtrl = list(maxeval= 1),
 #                                      calc.derivs = FALSE))
 # # compute predictive ability
@@ -201,9 +191,7 @@ ve <- attr(vc, "sc")^2;ve
 # ans2p <- update(ans2, 
 #                 start = getME(ans2, "theta"),
 #                 data = y.tst,
-#                 control = lmerControl(check.nobs.vs.nlev = "ignore",
-#                                       check.nobs.vs.rankZ = "ignore",
-#                                       check.nobs.vs.nRE="ignore",
+#                 control = lmerControl(
 #                                       optCtrl = list(maxeval= 1),
 #                                       calc.derivs = FALSE))
 # 
@@ -237,11 +225,7 @@ spatial <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
 # fit model
 mix1 <- lmebreed(Yield~ (1|Rowf) + (1|Colf) + (1|spatial),
                  addmat =list(spatial=Z),
-                 control = lmerControl(
-                   check.nobs.vs.nlev = "ignore",
-                   check.nobs.vs.rankZ = "ignore",
-                   check.nobs.vs.nRE="ignore"
-                 ), verbose = FALSE,
+                 verbose = FALSE,
                  data=DT)
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 
@@ -260,12 +244,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # head(DT2$long)
 # 
 # mix1 <- lmebreed(valueS~ (0+trait|id),
-#                  relmat=list(id=A),
-#                  control = lmerControl(
-#                    check.nobs.vs.nlev = "ignore",
-#                    check.nobs.vs.rankZ = "ignore",
-#                    check.nobs.vs.nRE="ignore"
-#                  ), verbose = FALSE,
+#                  relmat=list(id=A), verbose = FALSE,
 #                  data=DT2$long)
 # vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 
@@ -288,11 +267,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # 
 # mix.part <- lmebreed(color ~ (1|id),
 #                      relmat = list(id=MMT),
-#                      control = lmerControl(
-#                        check.nobs.vs.nlev = "ignore",
-#                        check.nobs.vs.rankZ = "ignore",
-#                        check.nobs.vs.nRE="ignore"
-#                      ), verbose = FALSE,
+#                      verbose = FALSE,
 #                      data=DT)
 # 
 # #convert BLUPs to marker effects me=M'(M'M)- u
@@ -325,11 +300,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # 
 # modeld <- lmebreed(X1~ UX + (1|id),
 #                  relmat=list(id=D),
-#                  control = lmerControl(
-#                    check.nobs.vs.nlev = "ignore",
-#                    check.nobs.vs.rankZ = "ignore",
-#                    check.nobs.vs.nRE="ignore"
-#                  ), verbose = FALSE,
+#                  verbose = FALSE,
 #                  data=DTd)
 # vc <- VarCorr(modeld); print(vc,comp=c("Variance"))
 # 
@@ -339,11 +310,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # 
 # modeln <- lmebreed(X1~ (1|id),
 #                    relmat=list(id=G),
-#                    control = lmerControl(
-#                      check.nobs.vs.nlev = "ignore",
-#                      check.nobs.vs.rankZ = "ignore",
-#                      check.nobs.vs.nRE="ignore"
-#                    ), verbose = FALSE,
+#                    verbose = FALSE,
 #                    data=DTn)
 # 
 # ## compare regular and transformed blups
@@ -484,11 +451,7 @@ k <- 1 # to be used for degrees of freedom (number of levels in fixed effects)
 # 
 # mix.part <- lmebreed(color ~ (1|id) + (1|Rowf) + (1|Colf),
 #                      relmat = list(id=MMT),
-#                      control = lmerControl(
-#                        check.nobs.vs.nlev = "ignore",
-#                        check.nobs.vs.rankZ = "ignore",
-#                        check.nobs.vs.nRE="ignore"
-#                      ), verbose = FALSE,
+#                      verbose = FALSE,
 #                      data=DT)
 # vc <- VarCorr(mix.part); print(vc,comp=c("Variance"))
 # mme <- getMME(object=mix.part)
