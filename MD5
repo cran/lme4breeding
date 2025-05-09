@@ -1,10 +1,10 @@
 db2e370bf2338d66070633864febc753 *ChangeLog
-2a2ba21ac93b54beaeaf60ef7569b0d0 *DESCRIPTION
+d4ac5c6c215b016fcdeefb0a9aabb84c *DESCRIPTION
 32280015c6b3b941badf8f85be3ff89f *NAMESPACE
 9c7845be29b1449552a57813a7b46084 *R/AllClass.R
-d52434aedc82350a92b53525bf102b41 *R/funs.R
+db64253015775fe22498c8a95cd41fc2 *R/funs.R
 14213186f215886fd0efaf73234ffb54 *R/plottingFuns.R
-d09018254442b5081073bfc67c6aa6e1 *R/utils.R
+3bfd4d538583897fbd3ec8664165bfc7 *R/utils.R
 d3adf66ee20ffc912f5b2c7453701233 *build/vignette.rds
 26ab818d0cb245d5eb554528a7962c2c *data/DT_augment.RData
 b359a855dd7c9a73ffbe78439bdd5747 *data/DT_btdata.RData
@@ -29,10 +29,10 @@ dda8d5dea234619ce45f4e1f21a92a7d *data/DT_technow.RData
 a09764237c6f8b6d3c7dcb74d6a182dd *inst/CITATION
 0781f46dbab5c6dfc8c03d9ef5e99646 *inst/doc/lmebreed.gxe.R
 670695cd6f88eac609ccde039605d1e5 *inst/doc/lmebreed.gxe.Rmd
-7e44156a291d79282b6d5809dbece1b6 *inst/doc/lmebreed.gxe.html
+b117395f4f89bec433f2d1d2e97cd0da *inst/doc/lmebreed.gxe.html
 601e46fad9936c04990bbcd2c225a87e *inst/doc/lmebreed.qg.R
 ae2ef58cdfad85bdf49e4123cec5776a *inst/doc/lmebreed.qg.Rmd
-f0dad7cec760bd8de60ecc4f2c863fca *inst/doc/lmebreed.qg.html
+75be2a73c5aa983200374097f65957c0 *inst/doc/lmebreed.qg.html
 96a4791ea342f8b865a01ab24f4575b0 *man/A.mat.Rd
 68633acf22885f17c55c0f3cd5c3d251 *man/DT_augment.Rd
 396b1fd1c67ce5b6b1e2cb6fa5e1f2b0 *man/DT_btdata.Rd

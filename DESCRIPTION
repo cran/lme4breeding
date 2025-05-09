@@ -1,6 +1,6 @@
 Package: lme4breeding
-Version: 1.0.60
-Date: 2025-04-27
+Version: 1.0.62
+Date: 2025-05-08
 Title: Relationship-Based Mixed-Effects Models
 Authors@R: c(
     person("Giovanny","Covarrubias-Pazaran", email="cova_ruber@live.com.mx", role=c("aut","cre"),
@@ -14,11 +14,11 @@ LazyLoad: yes
 LazyData: yes
 License: GPL (>= 2)
 NeedsCompilation: yes
-Author: Giovanny Covarrubias-Pazaran [aut, cre]
-    (<https://orcid.org/0000-0002-7194-3837>)
+Author: Giovanny Covarrubias-Pazaran [aut, cre] (ORCID:
+    <https://orcid.org/0000-0002-7194-3837>)
 Repository: CRAN
 Suggests: rmarkdown, knitr, orthopolynom, RSpectra
 VignetteBuilder: knitr
 Config/testthat/edition: 3
-Packaged: 2025-04-28 18:23:35 UTC; giovannycovarrubias
-Date/Publication: 2025-04-28 16:30:01 UTC
+Packaged: 2025-05-09 04:13:35 UTC; giovannycovarrubias
+Date/Publication: 2025-05-09 03:20:02 UTC
