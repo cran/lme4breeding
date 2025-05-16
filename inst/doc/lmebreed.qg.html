@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2025-05-08" />
+<meta name="date" content="2025-05-15" />
 
 <title>Quantitative genetics using the lme4breeding package</title>
 
@@ -342,7 +342,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Quantitative genetics using the
 lme4breeding package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2025-05-08</h4>
+<h4 class="date">2025-05-15</h4>
 
 
 
@@ -468,14 +468,14 @@ variance (with high marker density <span class="math inline">\(\sigma^2_A\)</spa
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>                 <span class="at">data=</span>DT)</span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(mix1); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
-##  id       (Intercept)  137.57 
-##  Colf     (Intercept)  140.40 
-##  Rowf     (Intercept)  823.69 
-##  Residual             3550.47</code></pre>
+##  id       (Intercept)  806.26 
+##  Colf     (Intercept)  198.43 
+##  Rowf     (Intercept)  848.63 
+##  Residual             2992.29</code></pre>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>ve <span class="ot">&lt;-</span> <span class="fu">attr</span>(<span class="fu">VarCorr</span>(mix1), <span class="st">&quot;sc&quot;</span>)<span class="sc">^</span><span class="dv">2</span></span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>h2<span class="ot">=</span> vc<span class="sc">$</span>id <span class="sc">/</span> ( vc<span class="sc">$</span>id <span class="sc">+</span> ve )</span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="fu">as.numeric</span>(h2)</span></code></pre></div>
-<pre><code>## [1] 0.03730172</code></pre>
+<pre><code>## [1] 0.212254</code></pre>
 <p>In this example we showed how to estimate the additive (<span class="math inline">\(\sigma^2_A\)</span>) variance components based on
 markers and estimate narrow-sense heritability (<span class="math inline">\(h^2\)</span>). Notice that we used the
 <code>relmat</code> argument which indicates that the random effect
