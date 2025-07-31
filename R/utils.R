@@ -8,7 +8,7 @@
     stop("This package requires R 3.5.0 or later")
   if(interactive()) {
     packageStartupMessage(blue(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(blue(paste("[] Linear Mixed Equations 4 Breeding (lme4breeding) 1.0.6 (2025-05) []",sep="")),appendLF=TRUE)
+    packageStartupMessage(blue(paste("[] Linear Mixed Equations 4 Breeding (lme4breeding) 1.0.7 (2025-08) []",sep="")),appendLF=TRUE)
     packageStartupMessage(paste0(blue("[] Author: Giovanny Covarrubias-Pazaran",paste0(bgGreen(white(" ")), bgWhite(magenta("*")), bgRed(white(" "))),"                        []")),appendLF=TRUE)
     packageStartupMessage(blue("[] Dedicated to the University of Chapingo and UW-Madison           []"),appendLF=TRUE)
     packageStartupMessage(blue("[] Type 'vignette('lmebreed.gxe')' for a short tutorial             []"),appendLF=TRUE)
@@ -246,31 +246,6 @@ getMME <- function(object, vc=NULL, recordsToUse=NULL){
   
 }
 
-stackTrait <- function(data, traits){
-  
-  dataScaled <- data
-  traits <- intersect(traits, colnames(data) )
-  idvars <- setdiff(colnames(data), traits)
-  for(iTrait in traits){
-    dataScaled[,iTrait] <- scale(dataScaled[,iTrait])
-  }
-  columnTypes <- unlist(lapply(data[idvars],class)) 
-  columnTypes <- columnTypes[which(columnTypes %in% c("factor","character"))]
-  idvars <- intersect(idvars,names(columnTypes))
-  data2 <- reshape(data[,c(idvars,traits)], idvar = idvars, varying = traits,
-                   timevar = "trait",
-                   times = traits,v.names = "value", direction = "long")
-  data2Scaled <- reshape(dataScaled[,c(idvars,traits)], idvar = idvars, varying = traits,
-                         timevar = "trait",
-                         times = traits,v.names = "value", direction = "long")
-  data2 <- as.data.frame(data2)
-  data2$valueS <- as.vector(unlist(data2Scaled$value))
-  rownames(data2) <- NULL
-  varG <- cov(data[,traits], use="pairwise.complete.obs")
-  # varG <- apply(data[,traits],2,var, na.rm=TRUE) 
-  mu <- apply(data[,traits],2,mean, na.rm=TRUE) 
-  return(list(long=data2, varG=varG, mu=mu))
-}
 
 fillData <- function(data, toBalanceSplit=NULL, toBalanceFill=NULL){
   if(is.null(toBalanceSplit)){stop("toBalanceSplit argument can not be NULL.",call. = FALSE)}
