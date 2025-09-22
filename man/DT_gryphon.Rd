@@ -49,8 +49,36 @@ head(DT)
 ## fit the model with no fixed effects (intercept only)
 mix1 <- lmebreed(BWT~ (1|ANIMAL),
                  relmat = list(ANIMAL=A),
+                 # how to control n iterations
+                 # control = lmerControl( 
+                 #  optCtrl = list(maxfun = 100, maxeval = 100)
+                 #   ),
                  data=DT)
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
+sigma(mix1)^2 # error variance
+BLUP <- ranef(mix1, condVar=TRUE)
+SEs <- attr(BLUP$ANIMAL, which="postVar")[,,]
+
+
+### multi-trait model
+traits <- c("BWT","TARSUS")
+for(iTrait in traits){DT[,iTrait] <- scale(imputev(DT[,iTrait]))}
+DTL <- reshape(DT[,c("ANIMAL", traits)], idvar = "ANIMAL", varying = traits,
+               v.names = "value", direction = "long",
+               timevar = "trait", times = traits )
+DTL <- DTL[with(DTL, order(trait)), ]
+head(DTL)
+
+system.time(
+  mix <- lmebreed(value ~ (0+trait|ANIMAL),
+                  relmat = list(ANIMAL=A),
+                  # rotation = TRUE, 
+                  data=DTL)
+)
+vc <- VarCorr(mix); print(vc,comp=c("Variance"))
+cov2cor(vc$ANIMAL)
+sigma(mix)^2 # error variance
+
 
 }
 

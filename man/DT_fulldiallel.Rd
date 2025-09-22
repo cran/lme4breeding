@@ -28,9 +28,16 @@ Douglas Bates, Martin Maechler, Ben Bolker, Steve Walker (2015). Fitting Linear 
 data(DT_fulldiallel)
 DT <- DT_fulldiallel
 head(DT)
-mix <- lmebreed(stems~1 + (1|female)+(1|male), data=DT)
+mix <- lmebreed(stems~1 + (1|female)+(1|male), 
+                # how to control n iterations
+                 # control = lmerControl( 
+                 #  optCtrl = list(maxfun = 100, maxeval = 100)
+                 #   ),
+                data=DT)
 vc <- VarCorr(mix); print(vc,comp=c("Variance"))
-
+sigma(mix)^2 # error variance
+BLUP <- ranef(mix, condVar=TRUE)
+SEs <- attr(BLUP$female, which="postVar")[,,]
 
 }
 \keyword{datasets}

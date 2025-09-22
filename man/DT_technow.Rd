@@ -44,6 +44,8 @@ Af <- Af + diag(1e-4, ncol(Af), ncol(Af))
 ans2 <- lmebreed(GY ~ (1|dent) + (1|flint),
                  data=DT)
 vc <- VarCorr(ans2); print(vc,comp=c("Variance"))
+BLUP <- ranef(ans2, condVar=TRUE)
+SEs <- attr(BLUP$dent, which="postVar")[,,]
 
 \donttest{
 
@@ -51,6 +53,10 @@ vc <- VarCorr(ans2); print(vc,comp=c("Variance"))
 ans2 <- lmebreed(GY ~ (1|dent) + (1|flint),
              relmat = list(dent=Ad,
                            flint=Af),
+             # how to control n iterations
+             # control = lmerControl( 
+             #  optCtrl = list(maxfun = 100, maxeval = 100)
+             #   ),
              data=DT)
 vc <- VarCorr(ans2); print(vc,comp=c("Variance"))
 
@@ -69,6 +75,7 @@ ans2 <- lmebreed(GY ~ (1|fema),
                  relmat = list(fema=A),
                  data=DT)
 vc <- VarCorr(ans2); print(vc,comp=c("Variance"))
+sigma(ans2)^2 # error variance
 
 }
 

@@ -43,8 +43,13 @@ head(DT)
 
 mix1 <- lmebreed(Yield~ (1|id) + (1|Rowf) + (1|Colf),
                  relmat=list(id=A),
+                 # how to control n iterations
+                 # control = lmerControl( 
+                 #  optCtrl = list(maxfun = 100, maxeval = 100)
+                 #   ),
                  data=DT)
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
+sigma(mix1)^2 # error variance
 
 # run one last iteration with imputed data
 # to make sure you get predictions for every level

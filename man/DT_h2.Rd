@@ -40,8 +40,14 @@ blockFormula <- paste0( "(0+", paste(colnames(Z), collapse = "+"), "|| Block)")
 form <- paste(csdiagFormula , blockFormula, sep="+")
 
 ans1b <- lmebreed(as.formula(form),
+                  # how to control n iterations
+                  # control = lmerControl( 
+                  #  optCtrl = list(maxfun = 100, maxeval = 100)
+                  #   ),
                   data=DT)
 vc <- VarCorr(ans1b); print(vc,comp=c("Variance"))
+sigma(ans1b)^2 # error variance
+
 
 }
 
