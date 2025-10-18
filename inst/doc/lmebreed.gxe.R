@@ -9,19 +9,15 @@ A <- A_example
 
 ansMain <- lmebreed(Yield ~ Env + (1|Name),
                         relmat = list(Name = A ),
-                        trace = 0L, data=DT)
+                         verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(ansMain); print(vc,comp=c("Variance"))
 
 
 ## -----------------------------------------------------------------------------
 
-Z <- with(DT, smm(Env))
-diagFormula <- paste0( "Yield ~ Env + (0+", paste(colnames(Z), collapse = "+"), "|| Name)")
-for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-print(as.formula(diagFormula))
-ansDG <- lmebreed(as.formula(diagFormula),
+ansDG <- lmebreed(Yield ~ Env + (0+Env || Name),
                       relmat = list(Name = A ),
-                      trace = FALSE, data=DT)
+                       verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(ansDG); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2; ve
 
@@ -34,31 +30,23 @@ colnames(E) <- rownames(E) <- unique(DT$Env);E
 EA <- Matrix::kronecker(E,A, make.dimnames = TRUE)
 ansCS <- lmebreed(Yield ~ Env + (1|Name) + (1|EnvName),
                     relmat = list(Name = A, EnvName=  EA ),
-                    trace = FALSE, data=DT)
+                     verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(ansCS); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2; ve
 
 ## -----------------------------------------------------------------------------
-Z <- with(DT, smm(Env))
-csdiagFormula <- paste0( "Yield ~ Env + (", paste(colnames(Z), collapse = "+"), "|| Name)")
-for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-print(as.formula(csdiagFormula))
-ansCSDG <- lmebreed(as.formula(csdiagFormula),
+ansCSDG <- lmebreed(Yield ~ Env + (Env || Name),
                       relmat = list(Name = A ),
-                      trace = FALSE, data=DT)
+                       verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(ansCSDG); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2; ve
 
 ## -----------------------------------------------------------------------------
 
-Z <- with(DT, smm(Env))
-usFormula <- paste0( "Yield ~ Env + (0+", paste(colnames(Z), collapse = "+"), "| Name)")
-for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-print(as.formula(usFormula))
-ansDG <- lmebreed(as.formula(usFormula),
+ansUS <- lmebreed(Yield ~ Env + (0+Env | Name),
                     relmat = list(Name = A ),
-                    trace = FALSE, data=DT)
-vc <- VarCorr(ansDG); print(vc,comp=c("Variance"))
+                     verbose = 0L, trace=0L, data=DT)
+vc <- VarCorr(ansUS); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2; ve
 
 
@@ -66,27 +54,23 @@ ve <- attr(vc, "sc")^2; ve
 
 # library(orthopolynom)
 # DT$EnvN <- as.numeric(as.factor(DT$Env))
-#  
+# # add new columns to dataset
 # Z <- with(DT, smm(leg(EnvN,1)) )
-# rrFormula <- paste0( "Yield ~ Env + (0+", paste(colnames(Z), collapse = "+"), "| Name)")
 # for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-# ansRR <- lmebreed(as.formula(rrFormula),
+# ansRR <- lmebreed(Yield ~ Env + (0+leg0+leg1| Name),
 #                   relmat = list(Name = A ),
+#                   verbose = 0L, trace=0L,
 #                   data=DT)
 # vc <- VarCorr(ansRR); print(vc,comp=c("Variance"))
 # ve <- attr(vc, "sc")^2; ve
 
 
 ## -----------------------------------------------------------------------------
-# library(orthopolynom)
-# DT$EnvN <- as.numeric(as.factor(DT$Env))
-#  Z <- with(DT, smm(leg(EnvN,1)) )
-# rrFormula <- paste0( "Yield ~ Env + (0+", paste(colnames(Z), collapse = "+"), "|| Name)")
-# for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-# ansRR <- lmebreed(as.formula(rrFormula),
+# ansRR2 <- lmebreed(Yield ~ Env + (0+leg0+leg1|| Name),
 #                   relmat = list(Name = A ),
+#                   verbose = 0L, trace=0L,
 #                   data=DT)
-# vc <- VarCorr(ansRR); print(vc,comp=c("Variance"))
+# vc <- VarCorr(ansRR2); print(vc,comp=c("Variance"))
 # ve <- attr(vc, "sc")^2; ve
 
 
@@ -103,14 +87,14 @@ ei <- ei[with(ei, order(envIndex)), ]
 DT2 <- merge(DT,ei, by="Env")
 DT2 <- DT2[with(DT2, order(Name)), ]
 
-ansFW <- lmebreed(y~ Env + (envIndex || Name), trace = FALSE, data=DT2)
+ansFW <- lmebreed(y~ Env + (envIndex || Name),  verbose = 0L, trace=0L, data=DT2)
 vc <- VarCorr(ansFW); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2; ve
 
 
 ## -----------------------------------------------------------------------------
 
-ansFW2 <- lmebreed(y~ Env + (envIndex | Name), trace = FALSE, data=DT2)
+ansFW2 <- lmebreed(y~ Env + (envIndex | Name),  verbose = 0L, trace=0L, data=DT2)
 vc <- VarCorr(ansFW2); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2; ve
 
@@ -131,21 +115,19 @@ diagFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"), "|| 
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 ans1a <- lmebreed(as.formula(diagFormula),
                   relmat = list(Name = A ),
-                  trace = FALSE,data=DT)
+                  verbose = 0L, trace=0L, 
+                  data=DT)
 vc <- VarCorr(ans1a); 
 H0 <- ranef(ans1a)$Name # GxE table
 
-# Use the GxE table to obtain loadings and build loadings columns
+# Use the GxE table to obtain loadings and build loadings columns in dataset
 nPC=3
 Z <- with(DT,  rrm(Env, H = H0, nPC = nPC) ) 
-Zd <- with(DT, smm(Env) )
-faFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"),
-                     "| Name) + (0+",paste(colnames(Zd), collapse = "+"), "|| Name)")
 for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 # fit the FA model (rr + diag) to calculate factor scores
-ansFA <- lmebreed(as.formula(faFormula),
+ansFA <- lmebreed(y ~ Env + (0+PC1+PC2+PC3|Name) + (0+Env|| Name),
                   relmat = list(Name = A ),
-                  trace = FALSE, data=DT)
+                  verbose = 0L, trace=0L, data=DT)
 
 u <- ranef(ansFA)$Name # all BLUPs
 scores <- as.matrix(u[,1:nPC])  # extract factor scores
@@ -176,7 +158,7 @@ head(DT)
 envs <- unique(DT$Env)
 vals <- list()
 for(i in 1:length(envs)){
-  ans1 <- lmebreed(y~Name + (1|Block), trace = FALSE, 
+  ans1 <- lmebreed(y~Name + (1|Block), trace = 0L, verbose = 0L,
                    data= droplevels(DT[which(DT$Env == envs[i]),]) )
   b <- fixef(ans1) 
   b[2:length(b)] <- b[2:length(b)] + b[1]
@@ -191,7 +173,7 @@ DT2 <- do.call(rbind, vals)
 ##########
 DT2$w <- 1/DT2$stdError
 ans2 <- lmebreed(Estimate~Env + (1|Effect) + (1|Env:Effect), weights = w,
-                 data=DT2, trace = FALSE
+                 data=DT2,  verbose = 0L, trace=0L
                  )
 vc <- VarCorr(ans2); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2; ve
@@ -206,6 +188,13 @@ M = apply(M_big,2,as.numeric) # change from bits to numeric
 rownames(M) <- rownames(M_big)
 DT[,"envf_repf"] = paste(DT[,"envf"],DT[,"repf"],sep="_")
 
+# we will make up missing data
+indsNa <- sample(unique(DT$id), 200)
+nas <- which(DT$id %in% indsNa) # sample(1:nrow(DT), round(nrow(DT)*.25))
+DT$value[nas]=NA
+DT$value <- imputev(DT$value, by=DT$envf_repf)
+DT$nas <- 0; DT$nas[nas]=1
+
 # compute the relationship matrix
 MMT <- tcrossprod(M)
 m <- sum(diag(MMT))/nrow(MMT)
@@ -215,12 +204,11 @@ MMT <- MMT + diag(1e-05, ncol(MMT), ncol(MMT))
 ## Fit the main effect model
 lmod <- lmebreed(formula=value~(1|id), data = DT, 
                   relmat = list(id = MMT), 
-                  rotation=TRUE, 
-                  trace=0L
+                  verbose = 0L, trace=0L, rotation=TRUE
 )
 
 # extract GEBVs
-ran0 <- ranef(lmod)
+ran0 <- ranef(lmod, condVar=FALSE)
 xx=as.data.frame(as.matrix(ran0$id) %*% matrix(rep(1,50), nrow=1) )
 xx$id <- rownames(xx)
 
@@ -229,32 +217,20 @@ xxl <- reshape(xx, idvar = "id", varying = list(1:(ncol(xx)-1)),
                v.names = "gebv", direction = "long", timevar = "envf_repf",
                times = unique(DT$envf_repf) )
 DTc <- merge(DT, xxl, by=c("id","envf_repf"), all.x = TRUE)
-with(DTc, plot(gebv,gv))
-with(DTc, cor(gebv,gv)) # accuracy is 0.39 
+with(DTc[which(DTc$nas ==1),], plot(gebv,gv))
+with(DTc[which(DTc$nas ==1),], cor(gebv,gv)) # accuracy is 0.39 
 
 
 
 ## -----------------------------------------------------------------------------
-
-# Add dummy variables to the dataset to estimate effects per environment
-Z <- with(DT, smm(envf_repf))
-for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-csdiagFormula <- paste0( "value ~ (1|envf) + (0+", paste(colnames(Z), collapse = "+"), "|| id)")
-
-## Fit the model
-lmod <- lmebreed(formula=as.formula(csdiagFormula), data = DT, 
-                  relmat = list(id = MMT), 
-                  control = lmerControl( # how to control n iterations
-                   calc.derivs = FALSE,
-                   restart_edge = FALSE,
-                   optCtrl = list(maxfun = 500, maxeval = 500)
-                  ),
-                  rotation=TRUE, #returnParams = T,
-                  trace=0L
+## Fit the diagonal model
+lmod <- lmebreed(formula=value~(0+envf_repf||id), data = DT, 
+                 relmat = list(id = MMT), nIters = 1000,
+                 verbose = 0L, trace=0L, rotation=TRUE
 )
 
 # Extract GEBVs
-ran0 <- ranef(lmod)
+ran0 <- ranef(lmod, condVar=FALSE)
 xx=as.data.frame(ran0$id)# u=H0
 xx$id <- rownames(xx)
 
@@ -263,34 +239,60 @@ xxl <- reshape(xx, idvar = "id", varying = list(1:(ncol(xx)-1)),
                v.names = "gebv", direction = "long", timevar = "envf_repf",
                times = colnames(xx)[1:(ncol(xx)-1)])
 DTc <- merge(DT, xxl, by=c("id","envf_repf"), all.x = TRUE)
-with(DTc, plot(gebv,gv))
-with(DTc, cor(gebv,gv)) # accuracy is 0.62
+# with(DTc[which(DTc$nas ==1),], plot(gebv,gv))
+with(DTc[which(DTc$nas ==1),], cor(gebv,gv)) # accuracy is ~0.62
 
 
 ## -----------------------------------------------------------------------------
 
-# Create a custom matrix for residuals at each environment
-DT$units <- NA
-for(i in unique(DT$envf_repf)){
-  sam <- which(DT$envf_repf == i)
-  DT$units[sam] <- 1:length(sam)
-}
-DT$units <- as.factor(DT$units)
-Zu <- sparse.model.matrix(~units-1, data=DT)
-DT$res <- (rep(colnames(Zu), nrow(DT)))[1:nrow(DT)]
-residualFormula <- paste0( "(0+", paste(colnames(Z), collapse = "+"), "|| res)")
-csdiagFormula <- paste(csdiagFormula , residualFormula, sep="+")
-
-# lmodRes <- lmebreed(formula=as.formula(csdiagFormula), data = DT,
-#                  relmat = list(id = MMT),
-#                  addmat = list(res=Zu),
-#                  control = lmerControl( # how to control n iterations
-#                    calc.derivs = FALSE,
-#                    restart_edge = FALSE,
-#                    optCtrl = list(maxfun = 500, maxeval = 500)
-#                  ),
-#                  rotation=TRUE,
-#                  trace=0L
+# lmodRes <- lmebreed(formula=value~(0+envf_repf||id) + (0+envf_repf||unitsR), data = DT,
+#                  relmat = list(id = MMT), nIters=1000,
+#                  verbose = 0L, trace=0L, rotation=TRUE
 # )
+# 
+# # Extract GEBVs
+# ran0 <- ranef(lmodRes, condVar=FALSE)
+# xx=as.data.frame(ran0$id)# u=H0
+# xx$id <- rownames(xx)
+# 
+# # Compare against
+# xxl <- reshape(xx, idvar = "id", varying = list(1:(ncol(xx)-1)),
+#                v.names = "gebv", direction = "long", timevar = "envf_repf",
+#                times = colnames(xx)[1:(ncol(xx)-1)])
+# DTc <- merge(DT, xxl, by=c("id","envf_repf"), all.x = TRUE)
+# with(DTc[which(DTc$nas ==1),], plot(gebv,gv))
+# with(DTc[which(DTc$nas ==1),], cor(gebv,gv)) # accuracy is ~0.62
+
+
+## -----------------------------------------------------------------------------
+# # get latent covariates and add them to the dataset
+# Gammas <- with(DT,  rrm(envf_repf, H = ran0$id, nPC = 3, returnGamma = TRUE))
+# Zrr <- Gammas$Zstar
+# for(i in 1:ncol(Zrr)){DT[,colnames(Zrr)[i]] <- Zrr[,i]}
+# # fit the model
+# ansRR <- lmebreed(value~(0+PC1+PC2+PC3|id) + (0+envf_repf||id), data = DT, 
+#                  relmat = list(id = MMT), nIters = 1000,
+#                  verbose = 0L, trace=0L, rotation=TRUE
+# )
+# vc <- VarCorr(ansRR); print(vc,comp=c("Variance"))
+# ve <- attr(vc, "sc")^2; ve
+# 
+# loadings=Gammas$Gamma
+# Gint <- loadings %*% vc$id %*% t(loadings)
+# Gspec <- diag( unlist(lapply(vc[2:(length(vc))], function(x){x[[1]]})) )
+# G <- Gint + Gspec
+# u <- ranef(ansRR, condVar=FALSE)$id
+# uInter <- as.matrix(u[,1:3]) %*% t(as.matrix(loadings))
+# uSpec <- as.matrix(u[,-c(1:3)])
+# u <- uSpec + uInter
+# 
+# xx=as.data.frame(u)# u=H0
+# xx$id <- rownames(xx)
+# xxl <- reshape(xx, idvar = "id", varying = list(1:(ncol(xx)-1)),
+#                v.names = "gebv", direction = "long", timevar = "envf_repf",
+#                times = colnames(xx)[1:(ncol(xx)-1)])
+# DTc <- merge(DT, xxl, by=c("id","envf_repf"), all.x = TRUE)
+# with(DTc[which(DTc$nas ==1),], plot(gebv,gv))
+# with(DTc[which(DTc$nas ==1),], cor(gebv,gv)) # accuracy is 0.62
 
 

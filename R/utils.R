@@ -8,13 +8,13 @@
     stop("This package requires R 3.5.0 or later")
   if(interactive()) {
     packageStartupMessage(blue(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(blue(paste("[] Linear Mixed Equations 4 Breeding (lme4breeding) 1.0.8 (2025-12) []",sep="")),appendLF=TRUE)
-    packageStartupMessage(paste0(blue("[] Author: Giovanny Covarrubias-Pazaran",paste0(bgGreen(white(" ")), bgWhite(magenta("*")), bgRed(white(" "))),"                        []")),appendLF=TRUE)
-    packageStartupMessage(blue("[] With the support of the lme4 dev team (Bolker, Bates, et al.)    []"),appendLF=TRUE)
+    packageStartupMessage(blue(paste("[] Linear Mixed Equations 4 Breeding (lme4breeding) 1.0.9 (2025-12) []",sep="")),appendLF=TRUE)
+    packageStartupMessage(paste0(blue("[] Author: Giovanny Covarrubias-Pazaran",paste0(bgGreen(white(" ")), bgWhite(magenta("*")), bgRed(white(" ")),"  ", bgRed(bold(yellow(" (") )),bgRed(bold(white("W"))), bgRed(bold(yellow(") "))) ) ,"                 []")),appendLF=TRUE)
+    packageStartupMessage(blue("[] Special thanks to the lme4 dev team (Bolker, Bates, et al.)      []"),appendLF=TRUE)
     packageStartupMessage(blue("[] Type 'vignette('lmebreed.gxe')' for a short tutorial             []"),appendLF=TRUE)
     packageStartupMessage(blue("[] Type 'citation('lme4breeding')' to know how to cite it           []"),appendLF=TRUE)
     packageStartupMessage(blue(paste("[]==================================================================[]")),appendLF=TRUE)
-    packageStartupMessage(blue("lme4breeding is updated on CRAN every 4-months due to CRAN policies"),appendLF=TRUE)
+    packageStartupMessage(blue("lme4breeding is updated on CRAN every 3-months due to CRAN policies"),appendLF=TRUE)
     packageStartupMessage(blue("Source code is available at https://github.com/covaruber/lme4breeding"),appendLF=TRUE)
   }
   invisible()
@@ -234,39 +234,6 @@ getMME <- function(object, vc=NULL, recordsToUse=NULL){
   
 }
 
-
-fillData <- function(data, toBalanceSplit=NULL, toBalanceFill=NULL){
-  if(is.null(toBalanceSplit)){stop("toBalanceSplit argument can not be NULL.",call. = FALSE)}
-  if(is.null(toBalanceFill)){stop("toBalanceFill argument can not be NULL.",call. = FALSE)}
-  levs <- levels(unique(as.factor(data[,toBalanceFill])))
-  subdata <- split(data, data[,toBalanceSplit])
-  subdata <- lapply(subdata, function(x){
-    missing <- setdiff(levs,unique(as.character(x[,toBalanceFill])))
-    tab <- table(x[,toBalanceFill])
-    tab <- tab[which(tab > 0)]
-    nRecords <- sort(tab, decreasing = TRUE)[1]
-    tab <- abs(tab - nRecords)
-    tab <- tab[which(tab > 0)]
-    tab <- data.frame(y=tab,z=names(tab))
-    toAdd <- unlist(apply(tab, 1, function(x){rep(x[2],x[1])}))
-    newX <- data.frame(c(rep(missing, nRecords), toAdd))
-    colnames(newX) <- toBalanceFill
-    addedCols <- setdiff(colnames(x), colnames(newX))
-    typesCols <- unlist(lapply(x, class))
-    for(iCol in addedCols){ # iCol = addedCols[1]
-      if(typesCols[iCol] %in% c("integer","numeric") ){
-        newX[,iCol] <- median(x[,iCol])
-      }
-      if(typesCols[iCol] %in% c("character","factor") ){
-        newX[,iCol] <- names(sort(table(x[,iCol]), decreasing = TRUE)[1])
-      }
-    }
-    return(rbind(x,newX))
-  })
-  final <- do.call(rbind, subdata)
-  return(final)
-}
-
 add.diallel.vars <- function(df, par1="Par1", par2="Par2",sep.cross="-"){
   # Dummy variables for selfs, crosses, combinations
   df[,"is.cross"] <- ifelse(df[,par1] == df[,par2], 0, 1)
@@ -483,6 +450,7 @@ rrm <- function(x=NULL, H=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE){
   if(cholD){
     ## OPTION 2. USING CHOLESKY
     Gamma <- t(chol(Sigma)); # LOADINGS  # same GE=LL' from cholesky  plot(unlist(Gamma%*%t(Gamma)), unlist(GE))
+    D=diag(nrow(Gamma))
   }else{
     ## OPTION 1. USING SVD
     U <- svd(Sigma)$u;  # V <- svd(GE)$v
@@ -509,7 +477,7 @@ rrm <- function(x=NULL, H=NULL, nPC=2, returnGamma=FALSE, cholD=TRUE){
   rownames(Z) <- NULL
   
   if(returnGamma){
-    return(list(Gamma=Gamma, H=H, Sigma=Sigma, Zstar=Zstar))
+    return(list(Gamma=Gamma, H=H, Sigma=Sigma, Zstar=Zstar, D=D))
   }else{
     return(Zstar)
   }
@@ -1520,3 +1488,144 @@ tps <- function (columncoordinates, rowcoordinates, nsegments=NULL,
   res
 }
 
+
+getCi <- function(object){
+  CiBlue <- vcov(object )
+  CiBlup <- condVar(object)
+  Ci <- Matrix::bdiag( CiBlue, CiBlup )
+  mapCi <- mkMmeIndex(object)# rbind(namesBlue, namesBlup)
+  Ci@Dimnames[[1]] <- mapCi$level
+  Ci@Dimnames[[2]] <- mapCi$variable
+  # rotate back cholesky (triangular dense matrix)
+  relmat <- ifelse(length(object@relfac) > 0, TRUE, FALSE) # control to know if we should rotate
+  if(relmat){
+    message(magenta(paste("Rotating back conditional variance using Cholesky factors")))
+    groups <- unique(mapCi[,c("variable","group")])
+    # L <- Matrix::Matrix(0, nrow=nrow(Ci), ncol = ncol(Ci))
+    Ll <- vl <- list()
+    for(iGroup in 1:nrow(groups)){ # iGroup = 2
+      v <- which( ( mapCi[,"variable"] == groups[iGroup,"variable"] ) & ( mapCi[,"group"] == groups[iGroup,"group"] ) )
+      vl[[iGroup]] <- v
+      if(groups[iGroup,"group"] %in% names( object@relfac )){ # extract relfac
+        # L[v,v] <- as(as(as( object@relfac[[ groups[iGroup,"group"] ]][ mapCi[v,"level"], mapCi[v,"level"] ] ,  "dMatrix"), "generalMatrix"), "CsparseMatrix") 
+        Ll[[iGroup]] <- as(as(as( object@relfac[[ groups[iGroup,"group"] ]][ mapCi[v,"level"], mapCi[v,"level"] ] ,  "dMatrix"), "generalMatrix"), "CsparseMatrix") 
+      }else{ # build a digonal
+        # L[v,v] <- Matrix::Diagonal(n=length(v))
+        Ll[[iGroup]] <- Matrix::Diagonal(n=length(v))
+      }
+    }
+    L <- do.call(bdiag, Ll)
+    L <- L[unlist(vl), unlist(vl)]
+    # Ci <- t(L) %*% Ci %*% L
+    Ci <- crossprod(L, Ci %*% L)
+    L <- NULL
+    Ci@Dimnames[[1]] <- mapCi$level
+    Ci@Dimnames[[2]] <- mapCi$variable
+  }
+  # rotate back eigen (dense eigen vectors)
+  eigmat <- ifelse(length(object@udu) > 0, TRUE, FALSE) # control to know if we should rotate
+  if(eigmat){
+    message(magenta(paste("Rotating back conditional variance using Eigen factors")))
+    groups <- unique(mapCi[,c("variable","group")])
+    # U <- Matrix::Matrix(0, nrow=nrow(Ci), ncol = ncol(Ci))
+    Ul <- vl <- list()
+    for(iGroup in 1:nrow(groups)){ # iGroup = 2
+      v <- which( ( mapCi[,"variable"] == groups[iGroup,"variable"] ) & ( mapCi[,"group"] == groups[iGroup,"group"] ) )
+      vl[[iGroup]] <- v
+      if(groups[iGroup,"group"] %in% names( object@udu$U ) ){ # extract relfac
+        # U[v,v] <- as(as(as( object@udu$U[[ groups[iGroup,"group"] ]][ mapCi[v,"level"], mapCi[v,"level"] ] ,  "dMatrix"), "generalMatrix"), "CsparseMatrix") 
+        Ul[[iGroup]] <- as(as(as( object@udu$U[[ groups[iGroup,"group"] ]][ mapCi[v,"level"], mapCi[v,"level"] ] ,  "dMatrix"), "generalMatrix"), "CsparseMatrix") 
+      }else{ # build a digonal
+        # U[v,v] <- Matrix::Diagonal(n=length(v))
+        Ul[[iGroup]] <- Matrix::Diagonal(n=length(v))
+      }
+    }
+    U <- do.call(bdiag, Ul)
+    U <- U[unlist(vl), unlist(vl)]
+    # Ci <- U %*% Ci %*% t(U)
+    Ci <- tcrossprod(U%*%Ci,U)
+    U <- NULL
+    Ci@Dimnames[[1]] <- mapCi$level
+    Ci@Dimnames[[2]] <- mapCi$variable
+  }
+  return(Ci)
+}
+
+mkMmeIndex <- function(object) {
+  # get information about the
+  # dimensions of the random
+  # effects
+  rp <- rePos$new(object)
+  # list with the levels for
+  # each grouping factor (one
+  # character-valued list
+  # element per factor)
+  levs <- lapply(rp$flist, levels)
+  # names of the variables
+  # associated with each random
+  # effect
+  variableNames <- groupl <- levsl <- list(); counter=1
+  for(i in 1:length(rp$cnms)){
+    variableNames[[counter]] <- rep(rp$cnms[[i]], rp$nlevs[ attr(rp$flist, "assign")[i] ] )
+    groupl[[counter]] <- rep( rep( names(rp$cnms)[i],  length(rp$cnms[[i]]) ), rp$nlevs[ attr(rp$flist, "assign")[i] ] )
+    levsl[[counter]] <- sort( rep(levs[[attr(rp$flist, "assign")[i]] ], length(rp$cnms[[i]])) )
+    counter=counter+1
+  }
+  variableNames <- unlist(variableNames, use.names = FALSE)
+  groupl <- unlist(groupl, use.names = FALSE)
+  level <- unlist(levsl, use.names = FALSE) # unlist(levs[attr(rp$flist, "assign")], use.names = FALSE)
+  namesBlup <- data.frame(index=1:length(level), level, variable=variableNames, group=groupl, type="random")
+  
+  CiBlue <- vcov(object )
+  namesBlue <- data.frame(index=1:ncol(CiBlue), level=colnames(CiBlue),
+                          variable="(Intercept)", group= colnames(CiBlue), type="fixed" )
+  fixedTerms <- terms(object)
+  fixedTerms <- attr(fixedTerms,"term.labels")
+  for(iF in fixedTerms){ # iF = fixedTerms[1]
+    Xi <- sparse.model.matrix(as.formula(paste("~",iF,"-1")), data=object@frame)
+    namesBlue$group[which(namesBlue$level %in% colnames(Xi))] <- iF
+  }
+  
+  namesBlup$index <- namesBlup$index + nrow(namesBlue)
+  res <- rbind(namesBlue, namesBlup)
+  
+  # variableNames <-
+  #   mapply(rep, rp$cnms,
+  #          times = rp$nlevs[attr(rp$flist, "assign")],
+  #          SIMPLIFY = FALSE) %>%
+  #   unlist(use.names = FALSE)
+  # construct the output data
+  # frame
+  # xx <- rep %>%
+  #   mapply(levs[attr(rp$flist, "assign")], # levels associated with each RE term
+  #          each = rp$ncols,                # num vars associated with each RE term
+  #          SIMPLIFY = FALSE) %>%
+  #   melt() %>%
+  #   setNames(c("level", "group")) %>%
+  #   mutate(variable = variableNames) %>%
+  #   mutate(index = row_number()) %>%
+  #   select(index, level, variable, group)
+  return(res)
+}
+
+Dtable <- function(object){
+  
+  mapCi <- mkMmeIndex(object) # rbind(namesBlue, namesBlup)
+  
+  tab <- unique(mapCi[,c("variable","group","type")])
+  tab[,"include"]=0
+  tab[,"average"]=0
+  return(tab)
+  
+}
+
+condVar <- function (object, scaled = TRUE) 
+{
+  Lamt <- getME(object, "Lambdat")
+  L <- getME(object, "L")
+  LL <- solve(L, Lamt, system = "A")
+  cc <- crossprod(Lamt, LL)
+  if (scaled) 
+    cc <- sigma(object)^2 * cc
+  cc
+}

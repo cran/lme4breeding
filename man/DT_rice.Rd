@@ -50,10 +50,6 @@ A <- A.mat(M$M)
 A <- A + diag(1e-4, ncol(A), ncol(A))
 mix <- lmebreed(Protein.content ~ (1|geno),
                 relmat = list(geno=A),
-                 # how to control n iterations
-                 # control = lmerControl( 
-                 #  optCtrl = list(maxfun = 100, maxeval = 100)
-                 #   ),
                 data=DT)
 vc <- VarCorr(mix); print(vc,comp=c("Variance"))
 sigma(mix)^2 # error variance
@@ -70,16 +66,15 @@ head(DTL)
 system.time(
   mix <- lmebreed(value ~ (0+trait|geno),
                   relmat = list(geno=A),
-                  # how to control n iterations
-                  # control = lmerControl( 
-                  #  optCtrl = list(maxfun = 100, maxeval = 100)
-                  #   ),
                   rotation = TRUE,
                   data=DTL)
 )
 vc <- VarCorr(mix); print(vc,comp=c("Variance"))
 vc$geno
 sigma(mix)^2 # error variance
+
+BLUP <- ranef(mix, condVar=TRUE)
+PEV <- lapply(BLUP, function(x){attr(x, which="postVar")}) # take sqrt() for SEs
 
 }
 

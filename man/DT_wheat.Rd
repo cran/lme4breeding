@@ -73,29 +73,23 @@ head(DT)
 system.time(
 mix0 <- lmebreed(pheno ~ (1|id),
                  relmat = list(id=K),
-                 # how to control n iterations
-                 # control = lmerControl( 
-                 #  optCtrl = list(maxfun = 100, maxeval = 100)
-                 #   ),
                  data=DT)
                  )
 vc <- VarCorr(mix0); print(vc,comp=c("Variance"))
 sigma(mix0)^2 # error variance
 BLUP <- ranef(mix0, condVar=TRUE)
-SEs <- attr(BLUP$id, which="postVar")[,,]
+PEV <- lapply(BLUP, function(x){attr(x, which="postVar")}) # take sqrt() for SEs
 
 #### unstructured model
-Z <- with(DT, smm(env))
-for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
 system.time(
-mix1 <- lmebreed(pheno ~ (0 + e1 + e2 + e3 + e4 | id),
-                 relmat = list(id=K),
-                 rotation = TRUE,
-                 # how to control n iterations
-                 # control = lmerControl( 
-                 #  optCtrl = list(maxfun = 100, maxeval = 100)
-                 #   ),
-                 data=DT)
+  mix1 <- lmebreed(pheno ~ (0 + env | id),
+                   relmat = list(id=K),
+                   rotation = TRUE,
+                   # how to control n iterations
+                   # control = lmerControl( 
+                   #  optCtrl = list(maxfun = 100, maxeval = 100)
+                   #   ),
+                   data=DT)
 )
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 sigma(mix1)^2 # error variance

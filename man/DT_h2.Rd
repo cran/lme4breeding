@@ -31,22 +31,19 @@ head(DT)
 
 \donttest{
 
+# model with:
+# Main+Diagonal for Name
+# Diagonal for Block
+# Diagonal for residuals
 DT=DT[with(DT, order(Env)), ]
-
-Z <- with(DT, smm(Env))
-for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-csdiagFormula <- paste0( "y ~ Env + (", paste(colnames(Z), collapse = "+"), "|| Name)")
-blockFormula <- paste0( "(0+", paste(colnames(Z), collapse = "+"), "|| Block)")
-form <- paste(csdiagFormula , blockFormula, sep="+")
-
-ans1b <- lmebreed(as.formula(form),
-                  # how to control n iterations
-                  # control = lmerControl( 
-                  #  optCtrl = list(maxfun = 100, maxeval = 100)
-                  #   ),
+ans1b <- lmebreed(y ~ Env + (Env||Name) + (0+Env||Block) + (0+Env||unitsR),
+                  verbose = 1L,
                   data=DT)
 vc <- VarCorr(ans1b); print(vc,comp=c("Variance"))
 sigma(ans1b)^2 # error variance
+
+BLUP <- ranef(ans1b, condVar=TRUE)
+PEV <- lapply(BLUP, function(x){attr(x, which="postVar")}) # take sqrt() for SEs
 
 
 }

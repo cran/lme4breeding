@@ -1,13 +1,15 @@
 #### "relmat" class methods
 lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL, 
-                      verbose = 0L, subset, weights, na.action, offset, contrasts = NULL,
+                      verbose = 1L, subset, weights, na.action, offset, contrasts = NULL,
+                      calc.derivs=FALSE, nIters=100,
                       # new params
                       family = NULL, relmat = list(),  addmat=list(), trace=1L,
                       dateWarning=TRUE, rotation=FALSE, rotationK=NULL, coefOutRotation=8, 
-                      returnParams=FALSE, returnMod=FALSE, ...)
+                      returnFormula=FALSE, suppressOpt=FALSE, ...)
 {
   my.date <- "2026-01-01" # expiry date
   your.date <- Sys.Date()
+  
   ## if your month is greater than my month you are outdated
   if(dateWarning){
     if (your.date > my.date) {
@@ -30,26 +32,117 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
     gaus <- family$family == "gaussian" && family$link == "identity"
   }
   mc <- match.call()
-  lmerc <- mc                         # create a call to lmer 
+  lmerc <- mc  # create a call to lmer (we need it twice)
+  
+  ## >>>>>>>>>>>> 
+  ## >>>>>>>>>>>> create a new formula (lme4 cannot interpret properly || )
+  '%!in%' <- function(x,y)!('%in%'(x,y))
+  if(!missing(data)){
+    classDT <- unlist(lapply(data, class))
+    data$unitsR <- 1:nrow(data)
+  }else{
+    vars <- all.vars(formula)
+    unitsR <- 1:length(get(vars[1]))
+    classDT <- unlist(lapply(as.list(vars), function(x){class(get(x))})); 
+    names(classDT) <- vars
+  }
+  j <- paste(deparse(formula), collapse="")
+  
+  match0 <- gregexpr("\\(([^()]|\\([^()]*\\))*\\)",j,perl=TRUE)
+  extracted <- regmatches(j,match0)[[1]]
+  randomTerms <- gsub("^\\(|\\)$","", extracted)
+  for(h in 1:3){randomTerms <- gsub("\\)","", sub(".*?\\(","",randomTerms) )}
+  randomTerms0 <- randomTerms
+  for(i in 1:length(randomTerms)){ # i=1 # for each random term
+    ithRandomTerm <- strsplit(randomTerms[i], split="[|]")[[1]]
+    intercept <- ithRandomTerm[1]
+    intercept <- strsplit(intercept,"[+]")[[1]]
+    intercept <- gsub(" ","",intercept)
+    slope <- ithRandomTerm[-c(1)]
+    slope <- gsub(" ","",slope)
+    for(k in 1:length(intercept)){ # k=2 # for each intercept int1+int2+int3 | slope
+      interceptK <- intercept[k]
+      if(!missing(data)){
+        checkExistInterK <- length(which(interceptK %in% names(classDT))) > 0
+      }else{
+        checkExistInterK <- exists(interceptK)
+      }
+      if(checkExistInterK){ # if the kth intercept is part of the model.frame or is in the environment
+        if( classDT[interceptK] %in% c("factor","character") ){ # if is a character of factor get levels and add
+          
+          if(!missing(data)){ # we can add the dummy variable to the data
+            variableForInterK <- gsub("[^[:alnum:]]", "", data[,interceptK]) # we remove special characters from intercept variable
+            # variableForInterK <- gsub("[+-]","",data[,interceptK])
+            Z <- smm(variableForInterK) # add new dummy columns
+            for(l in 1:ncol(Z)){data[,colnames(Z)[l]] <- Z[,l]}
+          }else{ # we have to create the variables and put them in the environment
+            # variableForInterK <- get(interceptK)
+            variableForInterK <- gsub("[^[:alnum:]]", "", get(interceptK)) # we remove special characters from intercept variable
+            Z <- smm(variableForInterK)
+            for(l in 1:ncol(Z)){assign(colnames(Z)[l], Z[,l] )}
+          }
+          levsIntercept <- sort(as.character(unique(variableForInterK)))
+          if("unitsR" %in% slope){ # if this is a random effect for unitsR
+            unitsR <- NA
+            for(m in levsIntercept){ # m = levsIntercept[1]
+              sam <- which(variableForInterK == m)
+              unitsR[sam] <- 1:length(sam)
+            }; unitsR <- as.factor(unitsR)
+            if(!missing(data)){data$unitsR <- unitsR}
+          } # "IHYB23Rattray"
+        }else{
+          levsIntercept <- interceptK
+          if("unitsR" %in% slope){
+            unitsR <- as.factor(1:length(variableForInterK))
+            if(!missing(data)){data$unitsR <- unitsR}
+          }
+        } # if kth intercept is a numeric covariate already
+      }else{ # if is not part of the model frame (e.g., 0 or 1)
+        levsIntercept <- interceptK
+        if(("unitsR" %in% slope) & (levsIntercept %!in% c("0","1"))){
+          unitsR <- as.factor(1:length(variableForInterK))
+          if(!missing(data)){data$unitsR <- unitsR}
+        }
+      }
+      randomTerms[i] <- gsub( interceptK, paste(levsIntercept,collapse = " + ") , randomTerms[i] )
+    }
+  }
+  newJ <- j # copy the formula
+  for(h in 1:length(randomTerms)){ # replace with new terms
+    newJ <- gsub(randomTerms0[h],randomTerms[h],newJ, fixed = TRUE)
+  }
+  lmerc$formula <- as.formula(newJ) # save the new formula in the call
+  if(!missing(data)){lmerc$data <- data} # save the new dataset in the call
+  
+  ## >>>>>>>>>>>>
   ## >>>>>>>>>>>> create control if user didn't specify it for the 3 things we want to force
   if(length(control)==0){
     if(gaus){
       control <- lmerControl(
+        calc.derivs = FALSE,
+        restart_edge = FALSE,
         check.nobs.vs.nlev = "ignore",
         check.nobs.vs.rankZ = "ignore",
-        check.nobs.vs.nRE="ignore"
+        check.nobs.vs.nRE="ignore",
+        optCtrl = list(maxfun = nIters, maxeval = nIters)
       )
     }else{
       control <- glmerControl(
+        calc.derivs = FALSE,
+        restart_edge = FALSE,
         check.nobs.vs.nlev = "ignore",
         check.nobs.vs.rankZ = "ignore",
-        check.nobs.vs.nRE="ignore"
+        check.nobs.vs.nRE="ignore",
+        optCtrl = list(maxfun = nIters, maxeval = nIters)
       )
     }
-  }else{ # if user provides a control force this 3 controls
+  }else{ # if user provides a control force these controls
     control$checkControl$check.nobs.vs.nlev = "ignore"
     control$checkControl$check.nobs.vs.rankZ = "ignore"
     control$checkControl$check.nobs.vs.nRE="ignore"
+    control$calc.derivs = calc.derivs
+    control$optCtrl$maxfun=nIters
+    control$optCtrl$maxeval=nIters
   }
   # lmerc$formula <- formula; lmerc$data <- data; 
   # lmerc$control <- control # only if we are using it 
@@ -58,20 +151,61 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
   lmerc$family <- family
   lmerc$control <- control
   lmerc$start <- start
+  lmerc$verbose <- verbose # remove relmat from the match call
   if (!gaus) {lmerc$REML <- NULL}
   ## if there are no relmats or additional matrices just return th regular lmer model
   if (!length(relmat) & !length(addmat))  {
-    lmerc$relmat <- NULL # remove relmat from the match call
+    lmerc$nIters <- NULL # remove relmat
+    lmerc$relmat <- NULL # remove relmat from the match call to avoid errors when evaluating the call
     lmerc$addmat <- NULL # remove relmat from the match call
     lmerc$trace <- NULL # remove relmat from the match call
     lmerc$dateWarning=NULL; lmerc$rotation=NULL; lmerc$rotationK=NULL
-    lmerc$coefOutRotation=NULL; lmerc$returnParams=NULL; lmerc$returnMod=NULL
-    return(eval.parent(lmerc))
+    lmerc$coefOutRotation=NULL; lmerc$returnFormula=NULL; lmerc$suppressOpt=NULL
+    if(returnFormula){
+      lmerc[[1]] <- if (gaus){as.name("lFormula")}else{as.name("glFormula")} 
+      suppressWarnings( mm <- eval.parent(lmerc), classes = "warning")
+      return(mm)
+    }else{
+      suppressWarnings( mm <- eval.parent(lmerc), classes = "warning")
+      cls <- if (gaus){"lmerlmebreed"}else{"glmerlmebreed"} 
+      # put it in a lmebreed object
+      ans <- do.call(new, list(Class=cls, relfac=list(), udu=list(), 
+                               frame=mm@frame, flist=mm@flist, cnms=mm@cnms, Gp=mm@Gp,
+                               theta=mm@theta, beta=mm@beta,u=mm@u,lower=mm@lower,
+                               devcomp=mm@devcomp, pp=mm@pp,resp=mm@resp,optinfo=mm@optinfo))
+      ans@call <- evalq(mc)
+      return(ans)
+    }
   }            # call [g]lmer instead
   
-  ## DO TRANSFORMATION BEFORE EVALUATING THE CALL
-  '%!in%' <- function(x,y)!('%in%'(x,y)) 
+  stopifnot(is.list(relmat),        # check the relmat argument
+            length(names(relmat)) == length(relmat),
+            all( sapply(relmat, inherits, what = c("relmat","matrix","Matrix"))  ))
+  
+  # >>>>>>>>> use the match call to parse the data and formula
+  lmerc[[1]] <- if (gaus){as.name("lFormula")}else{as.name("glFormula")} # change from model to lFormula
+  lmerc$nIters <- NULL # remove nIters
+  lmerc$relmat <- NULL # remove relmat from the match call
+  lmerc$addmat <- NULL # remove relmat from the match call
+  lmerc$dateWarning <- NULL # remove relmat from the match call
+  lmerc$rotation <- NULL # remove relmat from the match call
+  lmerc$rotationK <- NULL # remove relmat from the match call
+  lmerc$coefOutRotation <- NULL # remove relmat from the match call
+  lmerc$returnFormula <- NULL # remove relmat from the match call
+  lmerc$suppressOpt <- NULL # remove relmat from the match call
+  
   response <- all.vars(formula)[1]
+  if(rotation){ # if user want rotation we need to impute in advance
+    if(!missing(data)){
+      lmerc$data <- data
+      lmerc$data[,response] <- imputev(data[,response])
+    }
+  }
+  suppressWarnings( lmod <- eval.parent(lmerc) , classes = "warning") # necesary objects from lFormula
+  # return(lmod)
+  
+  ## DO ROTATION OF RESPONSE AND RELMATS IF REQUIRED (lmod$fr[,response])
+  '%!in%' <- function(x,y)!('%in%'(x,y)) 
   # control to ignore relmats if there's no match with formula vars
   if(length(relmat) > 0){
     if( length(intersect(names(relmat), all.vars(formula) )) == 0){
@@ -84,58 +218,41 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
       addmat <- list()
     }
   }
-  if( response %!in% colnames(data) ){stop("Response selected in your formula is not part of the dataset provided.", call. = FALSE)}
-  goodRecords <- which(!is.na(data[,response]))
+  if( response %!in% colnames(lmod$fr) ){stop("Response selected in your formula is not part of the dataset provided.", call. = FALSE)}
+  # goodRecords <- which(!is.na(lmod$fr[,response]))
   udu <- list()
   # >>>>>>>>> get cholesky factor (and new response if rotation)
   if(length(relmat) > 0){ 
     if(rotation){ # if UDU decomposition + Cholesky is requested
       if(length(relmat) > 1){warning("Rotation is only reported to be accurate with one relationship matrix. Make sure you are using the same relationship matrix for the different random effects for the rotation approach.", call. = FALSE)}
       for(iRel in 1:length(relmat)){
-        idsOrdered <- as.character(unique(data[,names(relmat)[iRel]])) # when we rotate we need to have relmat already ordered before creating the matrices
+        idsOrdered <- as.character(unique(lmod$fr[,names(relmat)[iRel]])) # when we rotate we need to have relmat already ordered before creating the matrices
         relmat[[iRel]] = relmat[[iRel]][ idsOrdered , idsOrdered ]
       }
       # only the first relmat will be used so if more, the rotation will only work if it is the same relmat in the next random effects
       udu <- umat(formula=as.formula(paste("~", paste(names(relmat), collapse = "+"))), relmat = relmat, 
-                  data=data, addmat = addmat, k=rotationK)
+                  data=lmod$fr, addmat = addmat, k=rotationK)
       # if rotation we impute the response
-      data[,response] <- imputev(x=data[,response],method="median")#, by=data[udu$effect])
-      newValues <- udu$Utn %*% Matrix::Matrix(data[,response])
+      lmod$fr[,response] <- imputev(x=lmod$fr[,response],method="median")#, by=data[udu$effect])
+      newValues <- udu$Utn %*% Matrix::Matrix(lmod$fr[,response])
       newValues <- newValues[,1]
       outlier <- grDevices::boxplot.stats(x=newValues,coef=coefOutRotation )$out
       if(length(outlier) > 0){newValues[which(newValues %in% outlier)] = mean(newValues[which(newValues %!in% outlier)])}
-      data[,response] <- newValues
-      if(trace){message("* Rotation of response finished.")}
+      lmod$fr[,response] <- newValues
+      if(trace){message(magenta("* Rotation of response finished."))}
       for(iD in names(udu$D)){
         relmat[[iD]] <- Matrix::chol(udu$D[[iD]])
       }
       udu$newValues <- newValues
-      lmerc$data <- data
-      if(trace){message("* Cholesky decomposition finished.")}
+      # lmerc$data <- data
+      if(trace){message(magenta("* Cholesky decomposition finished."))}
     }else{ # classical approach, just cholesky
       for (i in seq_along(relmat)) {
         relmat[[i]] <- Matrix::chol(relmat[[i]])
       }
-      if(trace){message("* Cholesky decomposition finished.")}
+      if(trace){message(magenta("* Cholesky decomposition finished."))}
     }
   }
-  
-  stopifnot(is.list(relmat),        # check the relmat argument
-            length(names(relmat)) == length(relmat),
-            all( sapply(relmat, inherits, what = c("relmat","matrix","Matrix"))  ))
-  
-  # >>>>>>>>> use the match call to parse the data and formula
-  lmerc[[1]] <- if (gaus){as.name("lFormula")}else{as.name("glFormula")} # change from model to lFormula
-  lmerc$relmat <- NULL # remove relmat from the match call
-  lmerc$addmat <- NULL # remove relmat from the match call
-  lmerc$dateWarning <- NULL # remove relmat from the match call
-  lmerc$rotation <- NULL # remove relmat from the match call
-  lmerc$rotationK <- NULL # remove relmat from the match call
-  lmerc$coefOutRotation <- NULL # remove relmat from the match call
-  lmerc$returnParams <- NULL # remove relmat from the match call
-  lmerc$returnMod <- NULL # remove relmat from the match call
-  
-  suppressWarnings( lmod <- eval.parent(lmerc) , classes = "warning") # necesary objects from lFormula
   
   # >>>>>>>>> extract relevant matrices from the lFormula object
   relfac <- relmat          # copy te relmat list for relfactor
@@ -151,13 +268,20 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
     if(rotation){
       if(ncol(udu$Utn) != nrow(lmod$X)){stop("Rotation approach requires your dataset to be balanced and imputed.")}
       lmod$X <- (udu$Utn %*% lmod$X) * lmod$X
-      if(trace){message("* Rotation applied to the X matrix.")}
+      if(trace){message(magenta("* Rotation applied to the X matrix."))}
+      udu$Utn <- NULL # avoid storing a big matrix after the multiplication
     }
   }
   ##############################
   
   # >>>>>>>>>> apply addmat (additional matrices)
   for (i in seq_along(addmat)) {
+    if(!missing(data)){
+      goodRecords <- which(!is.na(data[,response]))
+    }else{
+      provResponse <- get(response)
+      goodRecords <- which(!is.na(provResponse))
+    } # this second option may still not work
     tn0 <- which(match(pnms2[i], names(fl)) == asgn)
     for(j in 1:length(tn0)){ # diagonal and unstructured models require to multiple all matrices by the same relfactor
       ind <- (lmod$reTrms$Gp)[tn0[j]:(tn0[j]+1L)]
@@ -178,7 +302,7 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
         Zt[rowsi,] <- provZt[rownames(Zt[rowsi,]),]
       }
     }
-    if(trace){message("* Additional matrices (addmat) added.")}
+    if(trace){message(magenta("* Additional matrices (addmat) added."))}
   }
   
   # >>>>>>>>> time to apply the relmat
@@ -219,6 +343,9 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
         Zt <- do.call(rbind, ZtL)
       }else{ # complex model (multiple random intercepts)
         mm <- Matrix::Diagonal( length(lmod$reTrms$cnms[[pnms[i]]]) )
+        # print(mm)
+        # print(rowsi)
+        # print(str(provRelFac))
         if(length(rowsi) != ncol(provRelFac)*ncol(mm) ){stop(paste("Relationship matrix dimensions of ",pnms[i],"do not conform with the random effect, please review."), call. = FALSE)}
         provRelFac <- as(as(as( provRelFac,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
         ZtL <- list()
@@ -231,13 +358,13 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
     }
   }
   
-  if(trace){message("* Relfactors (relmat) applied to Z")}
-
+  if(trace){message(magenta("* Relfactors (relmat) applied to Z"))}
+  
   reTrms <- list(Zt=Zt,theta=if(is.null(start)){lmod$reTrms$theta}else{start},Lambdat=lmod$reTrms$Lambdat,Lind=lmod$reTrms$Lind,
                  lower=lmod$reTrms$lower,flist=lmod$reTrms$flist,cnms=lmod$reTrms$cnms, Gp=lmod$reTrms$Gp)
   lmod <- list(fr=lmod$fr, X=lmod$X, reTrms=reTrms, formula=formula, verbose=verbose,
-              start=if(is.null(start)){lmod$reTrms$theta}else{start},
-              control=control)
+               start=if(is.null(start)){lmod$reTrms$theta}else{start},
+               control=control)
   # print(str(lmod))
   if(length(control) == 0){
     if(gaus){ # if user calls a gaussian response family
@@ -249,14 +376,14 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
       lmod$control <- control
     }
   }
-  if(returnParams){ # if user only wants the incidence matrices
+  if(returnFormula){ # if user only wants the incidence matrices
     return(lmod)
   }else{
-    if(trace){message("* Optimizing ...")}
+    if(trace){message(magenta("* Optimizing ..."))}
     if (gaus) { # gaussian distribution
       lmod$REML = REML # TRUE# resp$REML > 0L
       suppressWarnings( devfun <- do.call(mkLmerDevfun, lmod ), classes = "warning") # creates a deviance function
-      if(returnMod){ # user wants to force variance components without fitting a model
+      if(suppressOpt){ # user wants to force variance components without fitting a model
         opt <- list(par = start, fval = devfun(start), feval = 1, conv = 0)
       }else{ # # user wants to optimize the varcomp optimizer
         suppressWarnings( opt <- optimizeLmer(devfun, optimizer = lmod$control$optimizer, 
@@ -270,10 +397,10 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
     } else { # exponential family of distributions
       lmod$family <- family
       suppressWarnings( devfun <- do.call(mkGlmerDevfun,lmod) , classes = "warning") # creates a deviance function
-      if(returnMod){ # user wants to force variance components without optimizing
+      if(suppressOpt){ # user wants to force variance components without optimizing
         opt <- list(par = start, fval = devfun(start), feval = 1, conv = 0)
       }else{ # user wants to optimize the varcomp optimizer
-        suppressWarnings( opt <- optimizeGlmer(devfun, optimizer = lmod$control$optimizer, 
+        suppressWarnings( opt <- optimizeGlmer(devfun, optimizer = lmod$control$optimizer[1], # only first optimizer used 
                                                control = lmod$control$optCtrl, 
                                                verbose=lmod$verbose, 
                                                calc.derivs=lmod$control$calc.derivs,
@@ -282,7 +409,7 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
                                                use.last.params=lmod$control$use.last.params,  ...)  ) # need to pass control 
       } 
     }
-    if(trace){message("* Done!!")}
+    if(trace){message(magenta("* Done!!"))}
     # make results in a mkMerMod object format
     suppressWarnings( mm <- mkMerMod(environment(devfun), opt, lmod$reTrms, lmod$fr, mc), classes = "warning" )
     cls <- if (gaus){"lmerlmebreed"}else{"glmerlmebreed"} 
@@ -297,17 +424,23 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
 }
 
 setMethod("ranef", signature(object = "lmebreed"),
-          function(object, condVar = FALSE, drop = FALSE, whichel = names(ans), ...)
-          {
+          function(object, condVar = TRUE, drop = FALSE, whichel = names(ans), includePEV=TRUE, ...)  {
+            # print("new")
             relmat <- ifelse(length(object@relfac) > 0, TRUE, FALSE)
-            ans <- lme4::ranef(object, condVar, drop = FALSE) # as(object, "merMod")
+            if(relmat){rf <- object@relfac}
+            ans <- lme4::ranef(object, condVar=FALSE, drop = FALSE) # extracts condVar 1st time
             ans <- ans[whichel]
-            if (relmat) { # transform back when relfac was used
-              rf <- object@relfac
-              for (nm in names(rf)) { # nm <- names(rf)[1]
-                dm <- data.matrix(ans[[nm]])
-                cn <- colnames(dm)
-                rn <- rownames(dm)
+            if(condVar){
+              mapCi <- mkMmeIndex(object) # rbind(namesBlue, namesBlup)
+              Ci <- getCi(object) # internally we're extracting condVar 2nd time
+            }
+            for (nm in names(object@flist)) { # for each random effect # nm <- names(rf)[1]
+              dm <- data.matrix(ans[[nm]])
+              cn <- colnames(dm)
+              rn <- rownames(dm)
+              
+              if (nm %in% names(object@relfac) ) { # transform back when relfac was used for this random effect
+                message(magenta(paste("Rotating back BLUPs by transpose of Cholesky (u=L'u*) for:", nm)))
                 dm <- t(as.matrix( t(dm) %*% rf[[nm]][rn,rn] )) # rotate BLUPs by the relfactor
                 # rotate one more time if a UDU rotation was used in the response
                 if(length(object@udu) > 0){ # rotation was used
@@ -320,40 +453,161 @@ setMethod("ranef", signature(object = "lmebreed"),
                 for(kCol in 1:ncol(ans[[nm]])){ # put in a nice shape
                   ans[[nm]][[kCol]] <- as.numeric(dm[,kCol])# data.frame(dm[[kCol]], check.names = FALSE)
                 }
-                # replace postVar if condVar=TRUE
-                if (condVar){
-                  X <- getME(object, "X") 
-                  Ci <- getMME(object)$Ci
-                  tn <- which(match(nm, names(object@flist)) == attr(object@flist, "assign") )
-                  for(j in 1:length(tn)){ # j=1
-                    ind <- (object@Gp)[tn[j]:(tn[j]+1L)]
-                    rowsi <- ( (ind[1]+1L):ind[2] ) + ncol(X)
-                    CiSub <- Ci[rowsi,rowsi]
-                    if(length(object@udu) > 0){ # rotation was used
-                      if( nm %in% names(object@udu$U) ){ # this only happens if there was a single relmat
-                        CiSub <- (object@udu$U[[nm]][rn,rn]) %*% CiSub[rn,rn] %*% t(object@udu$U[[nm]][rn,rn])
-                      }
-                    }
-                    if(is.list(attr(ans[[nm]], which="postVar"))){ # unstructured model
-                      attr(ans[[nm]], which="postVar")[[j]][,,] <- diag(CiSub)
-                    }else{ # simple model
-                      attr(ans[[nm]], which="postVar")[,,] <- diag(CiSub)
-                    }
-                  }
-                  
-                }
               }
+              if (condVar){ # if conditional variance was requested put it in our desired shape
+                mapCiNm <- mapCi[which(mapCi$group == nm),]
+                intercepts <- unique(mapCiNm$variable)
+                postVarNm <- matrix(NA, ncol=length(intercepts), nrow=nrow(mapCiNm)/length(intercepts) )
+                for(j in 1:length(intercepts)){ # iInter = 1 # intercepts[1]
+                  iInter <- intercepts[j]
+                  v <- mapCiNm[which(mapCiNm$variable == iInter), "index"]
+                  postVarNm[,j] <- diag(Ci)[v]
+                }
+                rownames(postVarNm) <- rownames(dm)
+                colnames(postVarNm) <- colnames(dm)
+                attr(ans[[nm]], which="postVar") <- postVarNm
+              }
+              
+            }
+            # before returning store the Ci and its names
+            if(all(c(includePEV, condVar))){ # if both are TRUE add the PEV
+              attr(ans, which="PEV") = Ci
+              attr(ans, which="mapCi") = mapCi
             }
             return(ans)
           })
 
 setMethod("fitted", signature(object = "lmebreed"),
           function(object, ...) {
-            stop("fitted() not applicable to lmebreed objects")
+            W <- do.call(cbind, getME(object = object, c("X","Z")) )
+            b <- rbind( fixef(object),
+                        getME(object = object, c("b")) )
+            y.hat <- W%*%b
+            return(y.hat)
           })
 
 
 setMethod("residuals", signature(object = "lmebreed"),
           function(object, ...) {
-            stop("residuals() not applicable to lmebreed objects")
+            getME(object, "y") - fitted(object)
           })
+
+setMethod("predict", signature(object = "lmebreed"),
+          function(object, hyperTable=NULL, classify=NULL, ...)  {
+            
+            if(is.null(classify)){
+              stop("Please provide the classify argument to build the D matrix.", call. = FALSE )
+            }
+            '%!in%' <- function(x,y)!('%in%'(x,y))
+            if(is.null(hyperTable)){ # default rules for the hypertable
+              message(magenta("hyperTable argument not provided. Building a hyper table based on the classify argument. Please check the output slot 'hyperTable' to ensure that the different effects have been included and average as you expected."))
+              hyperTable <- Dtable(object)
+              # if the user wants a simple averaging  (no include) we add 1s to all rows and 'average'
+              hyperTable$average[which(hyperTable$type == "fixed")]=1
+              # if the group hypertable matches perfectly the classify we do 'include'
+              perfect <- which(hyperTable$group %in% classify)
+              hyperTable$include[perfect]=1
+              hyperTable$average[perfect]=0
+              # if the group hypertable includes an intercept we do 'include'
+              hyperTable$include[which(hyperTable$group %in% "(Intercept)")]=1
+              # if the group hypertable matches imperfectly the classify we do 'include' and 'average'
+              imperfect <- which( unlist( lapply(as.list(hyperTable$group ), function(x){
+                xx <- strsplit(x,split=":")[[1]]
+                myMatch <- length(which( xx %in% classify ))
+                return(myMatch)
+              })
+              ) > 0)
+              imperfect <- setdiff(imperfect, perfect)
+              if(length(imperfect) > 0){
+                hyperTable$include[imperfect]=1
+                hyperTable$average[imperfect]=1
+              }
+            }
+            # get all information from the model
+            BLUP <- ranef(object, condVar=TRUE)
+            # get D table information
+            mapCi <- attr(BLUP, which="mapCi")
+            # get inverse of coefficient matrix
+            Ci <- attr(BLUP, which="PEV")
+            # get coefficients
+            b <- c( 
+              as.vector( fixef(object) ),
+              unlist( lapply(BLUP, function(x){
+                unlist(lapply(x, function(y){as.vector(y)}), use.names = FALSE )
+              }), use.names = FALSE )
+            )
+            # create the D matrix of linear combination
+            
+            classifys <- unique(c( all.vars(as.formula(paste("~",classify,"-1"))), classify))
+            Zd <- Matrix::sparse.model.matrix(as.formula(paste("~",classify,"-1")), data=object@frame ) 
+            levsOr <- colnames(Zd)
+            for(iClassify in classifys){
+              colnames(Zd) <- gsub(iClassify,"",colnames(Zd))
+            }
+            levs <- colnames(Zd)
+            D <- Matrix::Matrix(0, ncol=length(b), nrow=length(levs))
+            rownames(D) <- levs
+            # now add the rules specified in the hyperTable
+            for(iRow in 1:nrow(hyperTable)){ # iRow=2
+              iVar <- hyperTable[iRow,"variable"]
+              iGroup <- hyperTable[iRow,"group"]
+              # if we want to 'include' (nested we decide if we average or not)
+              if(hyperTable[iRow,"include"]>0){
+                v <- which(mapCi[,"variable"]==iVar ) # match the intercept
+                m <- which( unlist(lapply(as.list(mapCi[,"group"]), function(x){length(which( c( strsplit(x, split = ":")[[1]], x )== iGroup ))} )) > 0 ) # match the slope
+                v <- intersect(v,m) # columns involving in one way or another the slope within this intecept: hyperTable[iRow,"group"]
+                for (jRow in 1:nrow(D)) { # jRow=3
+                  ## direct match (same variable/intercept and group/slope)
+                  w <- which( unlist( lapply(as.list(mapCi[,"level"]), function(x){
+                    length( which(strsplit(x, split = ":")[[1]] %in%
+                                    c(
+                                      rownames(D)[jRow], 
+                                      levsOr[jRow],
+                                      strsplit(rownames(D)[jRow], split = ":")[[1]],
+                                      strsplit(levsOr[jRow], split = ":")[[1]],
+                                      "(Intercept)"
+                                    )
+                    ) )
+                  } ) ) > 0 )
+                  
+                  myMatch <- intersect(v,w)
+                  if (length(myMatch) > 0) {
+                    D[jRow, myMatch] = 1
+                  }
+                  
+                  ## indirect match
+                }
+                # in addition to include we ask to average
+                if(hyperTable[iRow,"average"]>0){
+                  nReps <- max(apply(D[,v,drop=FALSE],1,function(x){length(which(x>0))}))
+                  D[, v] = D[, v]/nReps
+                }
+              }
+              # if simple averaging we just add 1s to all rows first, 
+              # then we divide over the number of replicates for that effect
+              if(hyperTable[iRow,"average"]>0 & hyperTable[iRow,"include"]==0){
+                v <- which(mapCi[,"variable"]==iVar & mapCi[,"group"]==iGroup )
+                D[, v] = 1
+                nReps <- max(apply(D[,v,drop=FALSE],1,function(x){length(which(x>0))}))
+                if(hyperTable[iRow,"type"] == "fixed"){
+                  # if averaging effect we need to check if intercept exist and add it
+                  nReps <- nReps + length(which(mapCi[,"level"] %in% "(Intercept)"))
+                }
+                D[, v, drop=FALSE] =  D[, v, drop=FALSE]/nReps
+              }
+              ## end of rules
+            }
+            # compute the predicted values and std errors
+            predicted.value <- D %*% b
+            vcov <- D %*% Ci %*% t(D)
+            std.error <- sqrt(diag(vcov))
+            pvals <- data.frame(id = rownames(D),
+                                predicted.value = predicted.value[,1], 
+                                std.error = std.error)
+            # compile results
+            ans <- list(pvals=pvals, b=b, Ci=Ci, D=D, mapCi=mapCi, hyperTable=hyperTable, classify=classify )
+            return(ans)
+          })
+
+
+

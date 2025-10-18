@@ -9,7 +9,7 @@ A <- A_example
 
 ans1 <- lmebreed(Yield~ (1|Name) + (1|Env) + 
                    (1|Env:Name) + (1|Env:Block),
-             verbose = FALSE, data=DT)
+              verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(ans1); print(vc,comp=c("Variance"))
 ve <- attr(VarCorr(ans1), "sc")^2
 n.env <- length(levels(DT$Env))
@@ -28,7 +28,7 @@ A <- A + diag(1e-4, ncol(A), ncol(A))
 head(DT)
 mix1 <- lmebreed(Yield~ (1|id) + (1|Rowf) + (1|Colf),
                  relmat=list(id=A),
-                 verbose = FALSE,
+                 verbose = 0L, trace=0L,
                  data=DT)
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 ve <- attr(VarCorr(mix1), "sc")^2
@@ -40,13 +40,10 @@ data(DT_example)
 DT <- DT_example
 A <- A_example
 head(DT)
-## Compound simmetry (CS) + Diagonal (DIAG) model
-Z <- with(DT, smm(Env))
-csdiagFormula <- paste0( "Yield ~ Env + (", paste(colnames(Z), collapse = "+"), "|| Name)")
-for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-ansCSDG <- lmebreed(as.formula(csdiagFormula),
+## Main (M) + Diagonal (DIAG) model
+ansCSDG <- lmebreed(Yield ~ Env + (Env || Name),
                     relmat = list(Name = A ),
-                    verbose = FALSE, data=DT)
+                     verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(ansCSDG); print(vc,comp=c("Variance"))
 
 ## -----------------------------------------------------------------------------
@@ -56,7 +53,7 @@ DTi <- DTi_cornhybrids
 GT <- GT_cornhybrids
 
 modFD <- lmebreed(Yield~Location + (1|GCA1)+(1|GCA2)+(1|SCA),
-              verbose = FALSE,data=DT)
+               verbose = 0L, trace=0L, data=DT)
 
 vc <- VarCorr(modFD); print(vc,comp=c("Variance"))
 Vgca <- vc$GCA1 + vc$GCA2
@@ -83,7 +80,7 @@ fema <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
 #### model using overlay without relationship matrix
 modh <- lmebreed(sugar ~ (1|genof) + (1|fema),
                  addmat = list(fema=Z),
-             verbose = FALSE, data=DT)
+              verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(modh); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2;ve
 
@@ -107,7 +104,7 @@ ve <- attr(vc, "sc")^2;ve
 # K <- K + diag(1e-4, ncol(K), ncol(K) )
 # ans <- lmebreed(X1 ~ (1|line), 
 #                 relmat = list(line=K),
-#                 verbose = FALSE,
+#                  verbose = 0L, trace=0L,
 #                 data=y.trn)
 # vc <- VarCorr(ans); print(vc,comp=c("Variance"))
 # 
@@ -130,7 +127,7 @@ ve <- attr(vc, "sc")^2;ve
 # M <- tcrossprod(GT)
 # xx <- with(y.trn, redmm(x=line, M=M, nPC=100, returnLam = TRUE))
 # custom <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
-# ansRRBLUP <- lmebreed(X1 ~ (1|custom), verbose = FALSE,
+# ansRRBLUP <- lmebreed(X1 ~ (1|custom),  verbose = 0L, trace=0L,
 #                       addmat = list(custom=Z),
 #                       data=y.trn)
 # re <- ranef(ansRRBLUP)$custom
@@ -158,7 +155,7 @@ both <- (rep(colnames(Zf), nrow(DT)))[1:nrow(DT)]
 modIGE <- lmebreed(trait ~ block + (0+fn+nn|both),
                    addmat = list(both=list(Zf,Zn)),
                    relmat = list(both=A_ige),
-                   verbose = FALSE, data = DT)
+                    verbose = 0L, trace=0L, data = DT)
 vc <- VarCorr(modIGE); print(vc,comp=c("Variance"))
 blups <- ranef(modIGE)
 pairs(blups$both)
@@ -182,7 +179,7 @@ cov2cor(vc$both)
 # ans2 <- lmebreed(GY ~ (1|dent) + (1|flint),
 #                  relmat = list(dent=Ad,
 #                                flint=Af),
-#                  verbose = FALSE, data=y.trn)
+#                   verbose = 0L, trace=0L, data=y.trn)
 # vc <- VarCorr(ans2); print(vc,comp=c("Variance"))
 # 
 # # take a extended dataset and fit a dummy model 
@@ -225,7 +222,7 @@ spatial <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
 # fit model
 mix1 <- lmebreed(Yield~ (1|Rowf) + (1|Colf) + (1|spatial),
                  addmat =list(spatial=Z),
-                 verbose = FALSE,
+                  verbose = 0L, trace=0L,
                  data=DT)
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 
@@ -250,7 +247,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # head(DTL)
 # 
 # mix1 <- lmebreed(value~ (0+trait|id),
-#                  relmat=list(id=A), verbose = FALSE,
+#                  relmat=list(id=A),  verbose = 0L, trace=0L,
 #                  data=DTL)
 # vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 
@@ -273,11 +270,11 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # 
 # mix.part <- lmebreed(color ~ (1|id),
 #                      relmat = list(id=MMT),
-#                      verbose = FALSE,
+#                       verbose = 0L, trace=0L,
 #                      data=DT)
 # 
 # #convert BLUPs to marker effects me=M'(M'M)- u
-# re <- ranef(mix.part)$id
+# re <- ranef(mix.part, condVar=FALSE)$id
 # me.part<-MTMMTinv[,rownames(re)]%*%matrix(re[,1],ncol=1)
 # plot(me.part)
 
@@ -306,7 +303,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # 
 # modeld <- lmebreed(X1~ UX + (1|id),
 #                  relmat=list(id=D),
-#                  verbose = FALSE,
+#                   verbose = 0L, trace=0L,
 #                  data=DTd)
 # vc <- VarCorr(modeld); print(vc,comp=c("Variance"))
 # 
@@ -316,8 +313,9 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # 
 # modeln <- lmebreed(X1~ (1|id),
 #                    relmat=list(id=G),
-#                    verbose = FALSE,
+#                     verbose = 0L, trace=0L,
 #                    data=DTn)
+# vc <- VarCorr(modeln); print(vc,comp=c("Variance"))
 # 
 # ## compare regular and transformed blups
 # red <- ranef(modeld)$id
@@ -362,7 +360,7 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ##############################
 mix2 <- lmebreed(yield~ setf + setf:repf +
                    (1|femalef:malef:setf) + (1|malef:setf), 
-             verbose = FALSE, data=DT)
+              verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(mix2); print(vc,comp=c("Variance"))
 Vfm <- vc$`femalef:malef:setf`
 Vm <- vc$`malef:setf`
@@ -424,7 +422,7 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 mix2 <- lmebreed(yield~ setf + setf:repf +
                (1|femalef:malef:setf) + (1|malef:setf) + 
                (1|femalef:setf),
-             verbose = FALSE, data=DT)
+              verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(mix2); print(vc,comp=c("Variance"))
 Vfm <- vc$`femalef:malef:setf`
 Vm <- vc$`malef:setf`
@@ -457,16 +455,17 @@ k <- 1 # to be used for degrees of freedom (number of levels in fixed effects)
 # 
 # mix.part <- lmebreed(color ~ (1|id) + (1|Rowf) + (1|Colf),
 #                      relmat = list(id=MMT),
-#                      verbose = FALSE,
+#                       verbose = 0L, trace=0L,
 #                      data=DT)
 # vc <- VarCorr(mix.part); print(vc,comp=c("Variance"))
-# mme <- getMME(object=mix.part)
-# #convert BLUPs to marker effects me=M'(M'M)- u
-# re <- ranef(mix.part)$id
-# a.from.g<-MTMMTinv[,rownames(re)]%*%matrix(re[,1],ncol=1)
-# var.g <- kronecker(MMT[rownames(re),rownames(re)],vc$id) - 
-#   mme$Ci[rownames(re),rownames(re) ]
-# var.a.from.g <- t(M)%*%MMTinv[,rownames(re)]%*% (var.g) %*% t(MMTinv[,rownames(re)])%*%M
+# # convert BLUPs to marker effects me=M'(M'M)- u
+# re <- ranef(mix.part, condVar=TRUE)
+# u <- re$id
+# Ci <- attr(re, "PEV")
+# a.from.g<-MTMMTinv[,rownames(u)]%*%matrix(u[,1],ncol=1)
+# mu <- match(rownames(u),Ci@Dimnames[[1]])
+# var.g <- kronecker(MMT[rownames(u),rownames(u)],vc$id) - Ci[mu,mu]
+# var.a.from.g <- t(M)%*%MMTinv[,rownames(u)]%*% (var.g) %*% t(MMTinv[,rownames(u)])%*%M
 # se.a.from.g <- sqrt(diag(var.a.from.g))
 # t.stat.from.g <- a.from.g/se.a.from.g # t-statistic
 # pvalGBLUP <- dt(t.stat.from.g,df=n-k-1) # -log10(pval)

@@ -43,10 +43,6 @@ head(DT)
 
 mix1 <- lmebreed(Yield~ (1|id) + (1|Rowf) + (1|Colf),
                  relmat=list(id=A),
-                 # how to control n iterations
-                 # control = lmerControl( 
-                 #  optCtrl = list(maxfun = 100, maxeval = 100)
-                 #   ),
                  data=DT)
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 sigma(mix1)^2 # error variance
@@ -55,10 +51,12 @@ sigma(mix1)^2 # error variance
 # to make sure you get predictions for every level
 DT2 <- DT
 DT2$Yield <- imputev(DT2$Yield)
-mix2 <- update(mix1, returnMod = TRUE,
+mix2 <- update(mix1, suppressOpt = TRUE,
                start=getME(mix1, "theta"), 
                data=DT2)
 predsMix2 <- ranef(mix2)
+PEV <- lapply(predsMix2, function(x){attr(x, which="postVar")}) # take sqrt() for SEs
+
 # if you don't want the imputed vector to have an effect in
 # the predictions you can use the getMME function to use
 # the extended model and get predictions without including the 

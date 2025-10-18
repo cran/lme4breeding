@@ -49,15 +49,11 @@ head(DT)
 ## fit the model with no fixed effects (intercept only)
 mix1 <- lmebreed(BWT~ (1|ANIMAL),
                  relmat = list(ANIMAL=A),
-                 # how to control n iterations
-                 # control = lmerControl( 
-                 #  optCtrl = list(maxfun = 100, maxeval = 100)
-                 #   ),
                  data=DT)
 vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 sigma(mix1)^2 # error variance
 BLUP <- ranef(mix1, condVar=TRUE)
-SEs <- attr(BLUP$ANIMAL, which="postVar")[,,]
+PEV <- lapply(BLUP, function(x){attr(x, which="postVar")}) # take sqrt() for SEs
 
 
 ### multi-trait model

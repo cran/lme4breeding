@@ -9,11 +9,12 @@
 }
 \usage{
 lmebreed(formula, data, REML = TRUE, control = list(), start = NULL, 
-         verbose = 0L, subset, weights, na.action, offset, contrasts = NULL, 
+         verbose = 1L, subset, weights, na.action, offset, contrasts = NULL, 
+         calc.derivs = FALSE, nIters=100,
          # lmebreed special params
          family = NULL, relmat = list(), addmat = list(), trace=1L,
          dateWarning=TRUE, rotation=FALSE,  rotationK=NULL, coefOutRotation=8, 
-         returnParams=FALSE, returnMod=FALSE, ...)
+         returnFormula=FALSE, suppressOpt=FALSE, ...)
 }
 \arguments{
 
@@ -38,6 +39,19 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
   \item{offset}{as in \code{\link[lme4]{lmer}}}
   
   \item{contrasts}{as in \code{\link[lme4]{lmer}}}
+  
+  \item{calc.derivs}{as in \code{\link[lme4]{lmerControl}}. The intention of having
+  this argument at the level of main argument is to set it as FALSE as default 
+  to speed up computation. This means that in lme4breeding if you pass calc.derivs
+  inside the lmerControl object it won't have any effect. You need to set it using the 
+  argument in the lmebreed function.}
+  
+  \item{nIters}{the number of iterations used by the \code{\link[lme4]{optimizeGlmer}} 
+  and \code{\link[lme4]{optimizeLmer}} functions. Internally, it replaces the values of
+  the \code{maxfun} and \code{maxeval} arguments in the \code{\link[lme4]{lmerControl}} 
+  optCtrl passed.This means that in lme4breeding if you pass calc.derivs
+  inside the lmerControl object it won't have any effect. You need to set it using the 
+  argument in the lmebreed function. }
   
   \item{family}{as in \code{\link[lme4]{glmer}}}
   
@@ -72,12 +86,13 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
   be used in the rotation of the response when using the eigen decomposition to avoid 
   overshooting.}
   
-  \item{returnParams}{a logical value indicating if you want to only get the results from
+  \item{returnFormula}{a logical value indicating if you want to only get the results from
   the \code{\link[lme4]{lFormula}} after the relmat and addmat arguments have been applied.
   This is normally just used for debugging.}
   
-  \item{returnMod}{a logical value indicating if you want to force the model to use 
-    your customized variance components without estimating them. The variance components
+  \item{suppressOpt}{a logical value indicating if you want to force the model to use 
+    your customized variance components without estimating them. It skips the 
+    optimize(g)Lmer step to force the customized variance components. The variance components
     should be provided in the \code{start} argument. If you want to provide the variance
     components from a previous model you can get the initial values by running:
     
@@ -118,10 +133,9 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
   Additional useful functions are; \code{\link{tps}} for spatial kernels, \code{\link{rrm}} 
   for reduced rank matrices, \code{\link{atcg1234}} for conversion of genetic markers, 
   \code{\link{overlay}} for overlay matrices, \code{\link{reshape}} for moving wide 
-  format multi-trait datasets into long format, \code{\link{fillData}} for balancing 
-  datasets for two variables.
+  format multi-trait datasets into long format.
   
-  When using the optimizer argument inside the \code{\link[lme4]{lmerControl}} keep 
+  Normally, using the optimizer argument inside the \code{\link[lme4]{lmerControl}} keep 
   in mind that the number of iterations is called differently depending on the optimizer. 
   For \code{\link[lme4]{Nelder_Mead}}, bobyqa and \code{\link[lme4]{nlminbwrap}} is
   called "maxfun" whereas for \code{\link[lme4]{nloptwrap}} is called "maxeval". 
@@ -134,41 +148,84 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
          ), ...
         )}
         
-  To predict values for unobserved levels you will need to impute the data and update
+  But here, we have created the \code{nIters} argument to control the number of iterations
+  in the optimizer. To predict values for unobserved levels you will need to impute the data and update
   your model with the new dataset and the initial starting values:
   
   \code{
-    newModel <- update(oldModel, returnMod = TRUE,
+    newModel <- update(oldModel, suppressOpt = TRUE,
                        start=getME(oldModel, 'sigma'), 
                        data=imputedData)
   }
   
+  It is also worth mentioning that when the user does not provide the (g)lmerControl
+  we take the freedom to specify it to avoid some common warning or error messages such
+  as calculating the second derivatives for big models or not allowing to have a single 
+  record per treatment level:
+  
+  \code{
+  control <- (g)lmerControl(
+        calc.derivs = FALSE,
+        restart_edge = FALSE, 
+        check.nobs.vs.nlev = "ignore", 
+        check.nobs.vs.rankZ = "ignore", 
+        check.nobs.vs.nRE="ignore" 
+      )
+  }
+  
+  This is important to notice because if the user decides to specify its own controls
+  then the user should also consider some of these arguments that are the defaults in lmebreed.
+  
+  \strong{Methods}
+  
+  Some important methods to keep in mind are:
+  
+  \code{\link[lme4]{fixef}}: allows you to extract fixed coefficients (BLUEs) 
+  
+  \code{\link[stats]{vcov}}: allows you to extract the standard errors of fixed effects
+  
+  \code{\link[lme4]{ranef}}: allows you to extract random coefficients (BLUPs) and their standard errors
+  
+  \code{\link{getCi}}: allows you to extract the predicted error variance (PEV) matrix from a model
+  
+  \code{\link{mkMmeIndex}}: alllows you to extract the indices of the different fixed and random coefficients
+  
+  \code{\link{predict}}: allows you to extract fixed coefficients (BLUEs)
   
   \strong{Example Datasets}
 
 The package has been equiped with several datasets to learn how to use the lme4breeding package:
 
-* \code{\link{DT_halfdiallel}}, \code{\link{DT_fulldiallel}} and \code{\link{DT_mohring}} datasets have examples to fit half and full diallel designs.
-
-* \code{\link{DT_h2}} to calculate heritability
-
-* \code{\link{DT_cornhybrids}} and \code{\link{DT_technow}} datasets to perform genomic prediction in hybrid single crosses
-
-* \code{\link{DT_wheat}} dataset to do genomic prediction in single crosses in species displaying only additive effects.
-
-* \code{\link{DT_cpdata}} dataset to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects.
-
-* \code{\link{DT_polyploid}} to fit genomic prediction and GWAS analysis in polyploids.
-
-* \code{\link{DT_gryphon}} data contains an example of an animal model including pedigree information.
+* \code{\link{DT_big}} simulated dataset containing 1K individuals in 50 environments to show how to fit big models.
 
 * \code{\link{DT_btdata}} dataset contains an animal (birds) model.
 
-* \code{\link{DT_legendre}} simulated dataset for random regression model.
+* \code{\link{DT_cornhybrids}} dataset to perform genomic prediction in hybrid single crosses 
 
-* \code{\link{DT_sleepstudy}} dataset to know how to translate lme4 models to sommer models.
+* \code{\link{DT_cpdata}} dataset to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects. 
+
+* \code{\link{DT_fulldiallel}} dataset with examples to fit full diallel designs. 
+
+* \code{\link{DT_gryphon}} data contains an example of an animal model including pedigree information.
+
+* \code{\link{DT_halfdiallel}} dataset with examples to fit half diallel designs. 
+
+* \code{\link{DT_h2}} to calculate heritability
 
 * \code{\link{DT_ige}} dataset to show how to fit indirect genetic effect models.
+
+* \code{\link{DT_legendre}} simulated dataset for random regression model.
+
+* \code{\link{DT_mohring}} datasets with examples to fit half diallel designs.
+
+* \code{\link{DT_polyploid}} to fit genomic prediction and GWAS analysis in polyploids. 
+
+* \code{\link{DT_sleepstudy}} dataset to know how to translate lme4 models to lme4breeding models.
+
+* \code{\link{DT_technow}} dataset to perform genomic prediction in hybrid single crosses 
+
+* \code{\link{DT_wheat}} dataset to do genomic prediction in single crosses in species displaying only additive effects.
+
 
 }
 \value{
@@ -176,7 +233,7 @@ The package has been equiped with several datasets to learn how to use the lme4b
 }
 \references{
 
-Giovanny Covarrubias-Pazaran (2024).  lme4breeding: enabling genetic evaluation in the age of genomic data. To be submitted to Bioinformatics.
+Giovanny Covarrubias-Pazaran (2024).  lme4breeding: enabling genetic evaluation in the age of genomic data. To be submitted.
 
 Douglas Bates, Martin Maechler, Ben Bolker, Steve Walker (2015). Fitting Linear Mixed-Effects Models Using lme4. Journal of Statistical Software, 67(1), 1-48.
 
@@ -198,8 +255,9 @@ ansMain <- lmebreed(Yield ~ Env + (1|Name),
 vc <- VarCorr(ansMain); print(vc,comp=c("Variance"))
 sigma(ansMain)^2 # error variance
 
-BLUP <- ranef(ansMain, condVar=TRUE)$Name
-SEs <- attr(BLUP, which="postVar")[,,]
+BLUP <- ranef(ansMain, condVar=TRUE)
+PEV <- lapply(BLUP, function(x){attr(x, which="postVar")}) # take sqrt() for SEs
+
 
 }
 \keyword{models}
