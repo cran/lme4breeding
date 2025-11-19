@@ -50,11 +50,11 @@ library(lme4breeding)
 ```
 
 ```{r}
-data(DT_example)
+data(DT_example, package="enhancer")
 DT <- DT_example
 A <- A_example
 
-ans1 <- lmebreed(Yield~ (1|Name) + (1|Env) + 
+ans1 <- lmeb(Yield~ (1|Name) + (1|Env) + 
                    (1|Env:Name) + (1|Env:Block),
               verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(ans1); print(vc,comp=c("Variance"))
@@ -71,16 +71,16 @@ Recently with markers becoming cheaper, thousand of markers can be run in the br
 Assume you have a population (even unreplicated) in the field but in addition we have genetic markers. Now we can fit the model and estimate the genomic heritability that explains a portion of the additive genetic variance (with high marker density $\sigma^2_A$ = $\sigma^2_{markers}$)
 
 ```{r}
-data(DT_cpdata)
+data(DT_cpdata, package="enhancer")
 DT <- DT_cpdata
 GT <- GT_cpdata
 MP <- MP_cpdata
 #### create the variance-covariance matrix
-A <- A.mat(GT) # additive relationship matrix
+A <- A.matr(GT) # additive relationship matrix
 A <- A + diag(1e-4, ncol(A), ncol(A))
 #### look at the data and fit the model
 head(DT)
-mix1 <- lmebreed(Yield~ (1|id) + (1|Rowf) + (1|Colf),
+mix1 <- lmeb(Yield~ (1|id) + (1|Rowf) + (1|Colf),
                  relmat=list(id=A),
                  verbose = 0L, trace=0L,
                  data=DT)
@@ -99,18 +99,18 @@ Very often in multi-environment trials, the assumption that genetic variance is 
 We estimate variance components for specific environments.
 
 ```{r, fig.show='hold'}
-data(DT_example)
+data(DT_example, package="enhancer")
 DT <- DT_example
 A <- A_example
 head(DT)
 ## Main (M) + Diagonal (DIAG) model
-ansCSDG <- lmebreed(Yield ~ Env + (Env || Name),
+ansCSDG <- lmeb(Yield ~ Env + (Env || Name),
                     relmat = list(Name = A ),
                      verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(ansCSDG); print(vc,comp=c("Variance"))
 ```
 
-In the previous example we showed how the left side of the formulae to specify the covariance structure and the effect on the right side `(covStructure | effect)` in the `lmebreed()` solver. By specifying `( CA.2011+CA.2012+CA.2013 || Name)` we declare a covariance structure for Name between environments. The `||` indicates that we do not want to fit covariance between these environments This is considered a CS + DIAG (compound symmetry + diagonal) model.
+In the previous example we showed how the left side of the formulae to specify the covariance structure and the effect on the right side `(covStructure | effect)` in the `lmeb()` solver. By specifying `( CA.2011+CA.2012+CA.2013 || Name)` we declare a covariance structure for Name between environments. The `||` indicates that we do not want to fit covariance between these environments This is considered a CS + DIAG (compound symmetry + diagonal) model.
 
 ### 3) Half and full diallel designs (use of the overlay)
 
@@ -127,12 +127,12 @@ $y = X\beta + Zu_1 + Zu_2 + Zu_S + \epsilon$
 We estimate variance components for $GCA_1$, $GCA_2$ and $SCA$ and use them to estimate heritability. Additionally BLUPs for GCA and SCA effects can be used to predict crosses.
 
 ```{r}
-data(DT_cornhybrids)
+data(DT_cornhybrids, package="enhancer")
 DT <- DT_cornhybrids
 DTi <- DTi_cornhybrids
 GT <- GT_cornhybrids
 
-modFD <- lmebreed(Yield~Location + (1|GCA1)+(1|GCA2)+(1|SCA),
+modFD <- lmeb(Yield~Location + (1|GCA1)+(1|GCA2)+(1|SCA),
                verbose = 0L, trace=0L, data=DT)
 
 vc <- VarCorr(modFD); print(vc,comp=c("Variance"))
@@ -152,7 +152,7 @@ In the second data set we show a small half diallel with 7 parents crossed in on
 $y = X\beta + Zu_g + Zu_s + \epsilon$ 
 
 ```{r}
-data("DT_halfdiallel")
+data("DT_halfdiallel", package="enhancer")
 DT <- DT_halfdiallel
 head(DT)
 DT$femalef <- as.factor(DT$female)
@@ -160,11 +160,8 @@ DT$malef <- as.factor(DT$male)
 DT$genof <- as.factor(DT$geno)
 # overlay matrix to be added to the addmat argument
 Z <- with(DT, overlay(femalef,malef) )
-# create inital values for incidence matrix but irrelevant
-# since these will be replaced by admat argument
-fema <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
 #### model using overlay without relationship matrix
-modh <- lmebreed(sugar ~ (1|genof) + (1|fema),
+modh <- lmeb(sugar ~ (1|genof) + (1|fema),
                  addmat = list(fema=Z),
               verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(modh); print(vc,comp=c("Variance"))
@@ -183,17 +180,17 @@ $y = X\beta + Zu + \epsilon$
 
 <br>
 
-and takes advantage of the variance covariance matrix for the genotype effect known as the additive relationship matrix (A) and calculated using the `A.mat` function to establish connections among all individuals and predict the BLUPs for individuals that were not measured. The prediction accuracy depends on several factors such as the heritability ($h^2$), training population used (TP), size of TP, etc.
+and takes advantage of the variance covariance matrix for the genotype effect known as the additive relationship matrix (A) and calculated using the `A.matr` function to establish connections among all individuals and predict the BLUPs for individuals that were not measured. The prediction accuracy depends on several factors such as the heritability ($h^2$), training population used (TP), size of TP, etc.
 
 ```{r}
-# data(DT_wheat)
+# data(DT_wheat, package="enhancer")
 # DT <- DT_wheat
 # GT <- GT_wheat[,1:200]
 # colnames(DT) <- paste0("X",1:ncol(DT))
 # DT <- as.data.frame(DT);DT$line <- as.factor(rownames(DT))
 # # select environment 1
 # rownames(GT) <- rownames(DT)
-# K <- A.mat(GT) # additive relationship matrix
+# K <- A.matr(GT) # additive relationship matrix
 # colnames(K) <- rownames(K) <- rownames(DT)
 # # GBLUP pedigree-based approach
 # set.seed(12345)
@@ -203,7 +200,7 @@ and takes advantage of the variance covariance matrix for the genotype effect kn
 # head(y.trn)
 # ## GBLUP
 # K <- K + diag(1e-4, ncol(K), ncol(K) )
-# ans <- lmebreed(X1 ~ (1|line), 
+# ans <- lmeb(X1 ~ (1|line), 
 #                 relmat = list(line=K),
 #                  verbose = 0L, trace=0L,
 #                 data=y.trn)
@@ -227,8 +224,7 @@ and takes advantage of the variance covariance matrix for the genotype effect kn
 # ## rrBLUP
 # M <- tcrossprod(GT)
 # xx <- with(y.trn, redmm(x=line, M=M, nPC=100, returnLam = TRUE))
-# custom <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
-# ansRRBLUP <- lmebreed(X1 ~ (1|custom),  verbose = 0L, trace=0L,
+# ansRRBLUP <- lmeb(X1 ~ (1|custom),  verbose = 0L, trace=0L,
 #                       addmat = list(custom=Z),
 #                       data=y.trn)
 # re <- ranef(ansRRBLUP)$custom
@@ -242,7 +238,7 @@ General variance structures can be used to fit indirect genetic effects. Here, w
 
 ```{r}
 
-data(DT_ige)
+data(DT_ige, package="enhancer")
 DT <- DT_ige
 A_ige <- A_ige + diag(1e-4, ncol(A_ige), ncol(A_ige) )
 # Define 2 dummy variables to make a fake covariance
@@ -254,11 +250,8 @@ colnames(Zf) <- gsub("focal","", colnames(Zf))
 # Create the incidence matrix for the second random effect
 Zn <- Matrix::sparse.model.matrix( ~ neighbour-1, data=DT )
 colnames(Zn) <- gsub("neighbour","", colnames(Zn))
-# Make inital values for incidence matrix but irrelevant
-# since these will be replaced by the addmat argument
-both <- (rep(colnames(Zf), nrow(DT)))[1:nrow(DT)]
 # Fit the model
-modIGE <- lmebreed(trait ~ block + (0+fn+nn|both),
+modIGE <- lmeb(trait ~ block + (0+fn+nn|both),
                    addmat = list(both=list(Zf,Zn)),
                    relmat = list(both=A_ige),
                     verbose = 0L, trace=0L, data = DT)
@@ -294,12 +287,12 @@ $u_s$ ~ N(0, $K_3$$\sigma^2_us$)
 And we can specify the K matrices. The main difference between this model and the full and half diallel designs is the fact that this model will include variance covariance structures in each of the three random effects (GCA1, GCA2 and SCA) to be able to predict the crosses that have not ocurred yet. We will use the data published by Technow et al. (2015) to show how to do prediction of single crosses.
 
 ```{r}
-# data(DT_technow)
+# data(DT_technow, package="enhancer")
 # DT <- DT_technow
 # Md <- (Md_technow*2) - 1
 # Mf <- (Mf_technow*2) - 1
-# Ad <- A.mat(Md)
-# Af <- A.mat(Mf)
+# Ad <- A.matr(Md)
+# Af <- A.matr(Mf)
 # Ad <- Ad + diag(1e-4, ncol(Ad), ncol(Ad))
 # Af <- Af + diag(1e-4, ncol(Af), ncol(Af))
 # # simulate some missing hybrids to predict
@@ -307,7 +300,7 @@ And we can specify the K matrices. The main difference between this model and th
 # vv1 <- which(!is.na(DT$GY))
 # vv2 <- sample(DT[vv1,"hy"], 100)
 # y.trn[which(y.trn$hy %in% vv2),"GY"] <- NA
-# ans2 <- lmebreed(GY ~ (1|dent) + (1|flint),
+# ans2 <- lmeb(GY ~ (1|dent) + (1|flint),
 #                  relmat = list(dent=Ad,
 #                                flint=Af),
 #                   verbose = 0L, trace=0L, data=y.trn)
@@ -352,7 +345,7 @@ In order to do a good job modeling the spatial trends happening in the field, sp
 In this example we assume an unreplicated population where row and range information is available which allows us to fit a 2 dimensional spline model.
 
 ```{r}
-data(DT_cpdata)
+data(DT_cpdata, package="enhancer")
 DT <- DT_cpdata
 # add the units column
 DT$units <- as.factor(1:nrow(DT))
@@ -361,10 +354,8 @@ Zs <- with(DT, tps(Row, Col))$All
 rownames(Zs) <- DT$units
 # reduce the matrix to its PCs
 Z = with(DT, redmm(x=units, M=Zs, nPC=100))
-# create dummy variable
-spatial <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
 # fit model
-mix1 <- lmebreed(Yield~ (1|Rowf) + (1|Colf) + (1|spatial),
+mix1 <- lmeb(Yield~ (1|Rowf) + (1|Colf) + (1|spatial),
                  addmat =list(spatial=Z),
                   verbose = 0L, trace=0L,
                  data=DT)
@@ -380,12 +371,12 @@ Notice that the job is done by the `spl2Da()` function that takes the `Row` and 
 Sometimes is important to estimate genetic variance-covariance among traits--multi-reponse models are very useful for such a task. Let see an example with 2 traits (`color`, `Yield`) and a single random effect (genotype; `id`) although multiple effects can be modeled as well. We need to use a variance covariance structure for the random effect to be able to obtain the genetic covariance among traits.
 
 ```{r}
-# data(DT_cpdata)
+# data(DT_cpdata, package="enhancer")
 # DT <- DT_cpdata
 # GT <- GT_cpdata
 # MP <- MP_cpdata
 # #### create the variance-covariance matrix
-# A <- A.mat(GT) # additive relationship matrix
+# A <- A.matr(GT) # additive relationship matrix
 # A <- A + diag(1e-4, ncol(A), ncol(A))
 # #### look at the data and fit the model
 # traits <- c("color","Yield")
@@ -398,7 +389,7 @@ Sometimes is important to estimate genetic variance-covariance among traits--mul
 # DTL <- DTL[with(DTL, order(trait)), ]
 # head(DTL)
 # 
-# mix1 <- lmebreed(value~ (0+trait|id),
+# mix1 <- lmeb(value~ (0+trait|id),
 #                  relmat=list(id=A),  verbose = 0L, trace=0L,
 #                  data=DTL)
 # vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
@@ -418,7 +409,7 @@ The partitioned model was popularized by () to show that marker effects can be o
 
 ```{r}
 
-# data("DT_cpdata")
+# data("DT_cpdata", package="enhancer")
 # DT <- as.data.frame(DT_cpdata) 
 # M <- GT_cpdata
 # 
@@ -430,7 +421,7 @@ The partitioned model was popularized by () to show that marker effects can be o
 # MMTinv<-solve(MMT) ## inverse
 # MTMMTinv<-t(M)%*%MMTinv # M' %*% (M'M)-
 # 
-# mix.part <- lmebreed(color ~ (1|id),
+# mix.part <- lmeb(color ~ (1|id),
 #                      relmat = list(id=MMT),
 #                       verbose = 0L, trace=0L,
 #                      data=DT)
@@ -452,9 +443,9 @@ Lee and Van der Warf (2015) proposed a decomposition of the relationship matrix 
 ```{r}
 
 # 
-# data("DT_wheat")
+# data("DT_wheat", package="enhancer")
 # rownames(GT_wheat) <- rownames(DT_wheat)
-# G <- A.mat(GT_wheat)
+# G <- A.matr(GT_wheat)
 # Y <- data.frame(DT_wheat)
 # 
 # # make the decomposition
@@ -471,7 +462,7 @@ Lee and Van der Warf (2015) proposed a decomposition of the relationship matrix 
 # DTd$id<-as.character(DTd$id)
 # head(DTd)
 # 
-# modeld <- lmebreed(X1~ UX + (1|id),
+# modeld <- lmeb(X1~ UX + (1|id),
 #                  relmat=list(id=D),
 #                   verbose = 0L, trace=0L,
 #                  data=DTd)
@@ -481,7 +472,7 @@ Lee and Van der Warf (2015) proposed a decomposition of the relationship matrix 
 # DTn<-data.frame(id = rownames(G) , DT_wheat)
 # DTn$id<-as.character(DTn$id)
 # 
-# modeln <- lmebreed(X1~ (1|id),
+# modeln <- lmeb(X1~ (1|id),
 #                    relmat=list(id=G),
 #                     verbose = 0L, trace=0L,
 #                    data=DTn)
@@ -509,7 +500,7 @@ Estimating variance components has been a topic of interest for the breeding com
 ```{r}
 
 
-data(DT_expdesigns)
+data(DT_expdesigns, package="enhancer")
 DT <- DT_expdesigns$car1
 DT <- aggregate(yield~set+male+female+rep, data=DT, FUN = mean)
 DT$setf <- as.factor(DT$set)
@@ -537,7 +528,7 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ##############################
 ## REML method
 ##############################
-mix2 <- lmebreed(yield~ setf + setf:repf +
+mix2 <- lmeb(yield~ setf + setf:repf +
                    (1|femalef:malef:setf) + (1|malef:setf), 
               verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(mix2); print(vc,comp=c("Variance"))
@@ -603,7 +594,7 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ## REML method
 ##############################
 
-mix2 <- lmebreed(yield~ setf + setf:repf +
+mix2 <- lmeb(yield~ setf + setf:repf +
                (1|femalef:malef:setf) + (1|malef:setf) + 
                (1|femalef:setf),
               verbose = 0L, trace=0L, data=DT)
@@ -628,7 +619,7 @@ Gualdron-Duarte et al. (2014) and Bernal-Rubio et al. (2016) proved that in (Sin
 
 Let us use the DT_cpdata dataset to explore the GWAS by GBLUP method
 ```{r}
-data(DT_cpdata)
+data(DT_cpdata, package="enhancer")
 DT <- DT_cpdata
 GT <- GT_cpdata#[,1:200]
 MP <- MP_cpdata
@@ -648,7 +639,7 @@ Instead of fitting the RRBLUP/SNP-BLUP model we can fit a GBLUP model which is l
 # MMTinv<-solve( MMT ) ## inverse
 # MTMMTinv<-t(M)%*%MMTinv # M' %*% (M'M)-
 # 
-# mix.part <- lmebreed(color ~ (1|id) + (1|Rowf) + (1|Colf),
+# mix.part <- lmeb(color ~ (1|id) + (1|Rowf) + (1|Colf),
 #                      relmat = list(id=MMT),
 #                       verbose = 0L, trace=0L,
 #                      data=DT)

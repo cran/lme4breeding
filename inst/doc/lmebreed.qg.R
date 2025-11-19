@@ -3,11 +3,11 @@
 library(lme4breeding)
 
 ## -----------------------------------------------------------------------------
-data(DT_example)
+data(DT_example, package="enhancer")
 DT <- DT_example
 A <- A_example
 
-ans1 <- lmebreed(Yield~ (1|Name) + (1|Env) + 
+ans1 <- lmeb(Yield~ (1|Name) + (1|Env) + 
                    (1|Env:Name) + (1|Env:Block),
               verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(ans1); print(vc,comp=c("Variance"))
@@ -17,16 +17,16 @@ H2=vc$Name / ( vc$Name + (vc$`Env:Name`/n.env) + (ve/(n.env*2)) )
 H2
 
 ## -----------------------------------------------------------------------------
-data(DT_cpdata)
+data(DT_cpdata, package="enhancer")
 DT <- DT_cpdata
 GT <- GT_cpdata
 MP <- MP_cpdata
 #### create the variance-covariance matrix
-A <- A.mat(GT) # additive relationship matrix
+A <- A.matr(GT) # additive relationship matrix
 A <- A + diag(1e-4, ncol(A), ncol(A))
 #### look at the data and fit the model
 head(DT)
-mix1 <- lmebreed(Yield~ (1|id) + (1|Rowf) + (1|Colf),
+mix1 <- lmeb(Yield~ (1|id) + (1|Rowf) + (1|Colf),
                  relmat=list(id=A),
                  verbose = 0L, trace=0L,
                  data=DT)
@@ -36,23 +36,23 @@ h2= vc$id / ( vc$id + ve )
 as.numeric(h2)
 
 ## ----fig.show='hold'----------------------------------------------------------
-data(DT_example)
+data(DT_example, package="enhancer")
 DT <- DT_example
 A <- A_example
 head(DT)
 ## Main (M) + Diagonal (DIAG) model
-ansCSDG <- lmebreed(Yield ~ Env + (Env || Name),
+ansCSDG <- lmeb(Yield ~ Env + (Env || Name),
                     relmat = list(Name = A ),
                      verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(ansCSDG); print(vc,comp=c("Variance"))
 
 ## -----------------------------------------------------------------------------
-data(DT_cornhybrids)
+data(DT_cornhybrids, package="enhancer")
 DT <- DT_cornhybrids
 DTi <- DTi_cornhybrids
 GT <- GT_cornhybrids
 
-modFD <- lmebreed(Yield~Location + (1|GCA1)+(1|GCA2)+(1|SCA),
+modFD <- lmeb(Yield~Location + (1|GCA1)+(1|GCA2)+(1|SCA),
                verbose = 0L, trace=0L, data=DT)
 
 vc <- VarCorr(modFD); print(vc,comp=c("Variance"))
@@ -66,7 +66,7 @@ Vg <- Va + Vd
 (h2 <- Va / (Vg + (Ve)) )
 
 ## -----------------------------------------------------------------------------
-data("DT_halfdiallel")
+data("DT_halfdiallel", package="enhancer")
 DT <- DT_halfdiallel
 head(DT)
 DT$femalef <- as.factor(DT$female)
@@ -74,25 +74,22 @@ DT$malef <- as.factor(DT$male)
 DT$genof <- as.factor(DT$geno)
 # overlay matrix to be added to the addmat argument
 Z <- with(DT, overlay(femalef,malef) )
-# create inital values for incidence matrix but irrelevant
-# since these will be replaced by admat argument
-fema <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
 #### model using overlay without relationship matrix
-modh <- lmebreed(sugar ~ (1|genof) + (1|fema),
+modh <- lmeb(sugar ~ (1|genof) + (1|fema),
                  addmat = list(fema=Z),
               verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(modh); print(vc,comp=c("Variance"))
 ve <- attr(vc, "sc")^2;ve
 
 ## -----------------------------------------------------------------------------
-# data(DT_wheat)
+# data(DT_wheat, package="enhancer")
 # DT <- DT_wheat
 # GT <- GT_wheat[,1:200]
 # colnames(DT) <- paste0("X",1:ncol(DT))
 # DT <- as.data.frame(DT);DT$line <- as.factor(rownames(DT))
 # # select environment 1
 # rownames(GT) <- rownames(DT)
-# K <- A.mat(GT) # additive relationship matrix
+# K <- A.matr(GT) # additive relationship matrix
 # colnames(K) <- rownames(K) <- rownames(DT)
 # # GBLUP pedigree-based approach
 # set.seed(12345)
@@ -102,7 +99,7 @@ ve <- attr(vc, "sc")^2;ve
 # head(y.trn)
 # ## GBLUP
 # K <- K + diag(1e-4, ncol(K), ncol(K) )
-# ans <- lmebreed(X1 ~ (1|line), 
+# ans <- lmeb(X1 ~ (1|line), 
 #                 relmat = list(line=K),
 #                  verbose = 0L, trace=0L,
 #                 data=y.trn)
@@ -126,8 +123,7 @@ ve <- attr(vc, "sc")^2;ve
 # ## rrBLUP
 # M <- tcrossprod(GT)
 # xx <- with(y.trn, redmm(x=line, M=M, nPC=100, returnLam = TRUE))
-# custom <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
-# ansRRBLUP <- lmebreed(X1 ~ (1|custom),  verbose = 0L, trace=0L,
+# ansRRBLUP <- lmeb(X1 ~ (1|custom),  verbose = 0L, trace=0L,
 #                       addmat = list(custom=Z),
 #                       data=y.trn)
 # re <- ranef(ansRRBLUP)$custom
@@ -136,7 +132,7 @@ ve <- attr(vc, "sc")^2;ve
 
 ## -----------------------------------------------------------------------------
 
-data(DT_ige)
+data(DT_ige, package="enhancer")
 DT <- DT_ige
 A_ige <- A_ige + diag(1e-4, ncol(A_ige), ncol(A_ige) )
 # Define 2 dummy variables to make a fake covariance
@@ -148,11 +144,8 @@ colnames(Zf) <- gsub("focal","", colnames(Zf))
 # Create the incidence matrix for the second random effect
 Zn <- Matrix::sparse.model.matrix( ~ neighbour-1, data=DT )
 colnames(Zn) <- gsub("neighbour","", colnames(Zn))
-# Make inital values for incidence matrix but irrelevant
-# since these will be replaced by the addmat argument
-both <- (rep(colnames(Zf), nrow(DT)))[1:nrow(DT)]
 # Fit the model
-modIGE <- lmebreed(trait ~ block + (0+fn+nn|both),
+modIGE <- lmeb(trait ~ block + (0+fn+nn|both),
                    addmat = list(both=list(Zf,Zn)),
                    relmat = list(both=A_ige),
                     verbose = 0L, trace=0L, data = DT)
@@ -163,12 +156,12 @@ cov2cor(vc$both)
 
 
 ## -----------------------------------------------------------------------------
-# data(DT_technow)
+# data(DT_technow, package="enhancer")
 # DT <- DT_technow
 # Md <- (Md_technow*2) - 1
 # Mf <- (Mf_technow*2) - 1
-# Ad <- A.mat(Md)
-# Af <- A.mat(Mf)
+# Ad <- A.matr(Md)
+# Af <- A.matr(Mf)
 # Ad <- Ad + diag(1e-4, ncol(Ad), ncol(Ad))
 # Af <- Af + diag(1e-4, ncol(Af), ncol(Af))
 # # simulate some missing hybrids to predict
@@ -176,7 +169,7 @@ cov2cor(vc$both)
 # vv1 <- which(!is.na(DT$GY))
 # vv2 <- sample(DT[vv1,"hy"], 100)
 # y.trn[which(y.trn$hy %in% vv2),"GY"] <- NA
-# ans2 <- lmebreed(GY ~ (1|dent) + (1|flint),
+# ans2 <- lmeb(GY ~ (1|dent) + (1|flint),
 #                  relmat = list(dent=Ad,
 #                                flint=Af),
 #                   verbose = 0L, trace=0L, data=y.trn)
@@ -208,7 +201,7 @@ cov2cor(vc$both)
 # cor(preds, real)
 
 ## -----------------------------------------------------------------------------
-data(DT_cpdata)
+data(DT_cpdata, package="enhancer")
 DT <- DT_cpdata
 # add the units column
 DT$units <- as.factor(1:nrow(DT))
@@ -217,10 +210,8 @@ Zs <- with(DT, tps(Row, Col))$All
 rownames(Zs) <- DT$units
 # reduce the matrix to its PCs
 Z = with(DT, redmm(x=units, M=Zs, nPC=100))
-# create dummy variable
-spatial <- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]
 # fit model
-mix1 <- lmebreed(Yield~ (1|Rowf) + (1|Colf) + (1|spatial),
+mix1 <- lmeb(Yield~ (1|Rowf) + (1|Colf) + (1|spatial),
                  addmat =list(spatial=Z),
                   verbose = 0L, trace=0L,
                  data=DT)
@@ -228,12 +219,12 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 
 
 ## -----------------------------------------------------------------------------
-# data(DT_cpdata)
+# data(DT_cpdata, package="enhancer")
 # DT <- DT_cpdata
 # GT <- GT_cpdata
 # MP <- MP_cpdata
 # #### create the variance-covariance matrix
-# A <- A.mat(GT) # additive relationship matrix
+# A <- A.matr(GT) # additive relationship matrix
 # A <- A + diag(1e-4, ncol(A), ncol(A))
 # #### look at the data and fit the model
 # traits <- c("color","Yield")
@@ -246,7 +237,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # DTL <- DTL[with(DTL, order(trait)), ]
 # head(DTL)
 # 
-# mix1 <- lmebreed(value~ (0+trait|id),
+# mix1 <- lmeb(value~ (0+trait|id),
 #                  relmat=list(id=A),  verbose = 0L, trace=0L,
 #                  data=DTL)
 # vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
@@ -256,7 +247,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 
 ## -----------------------------------------------------------------------------
 
-# data("DT_cpdata")
+# data("DT_cpdata", package="enhancer")
 # DT <- as.data.frame(DT_cpdata) 
 # M <- GT_cpdata
 # 
@@ -268,7 +259,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # MMTinv<-solve(MMT) ## inverse
 # MTMMTinv<-t(M)%*%MMTinv # M' %*% (M'M)-
 # 
-# mix.part <- lmebreed(color ~ (1|id),
+# mix.part <- lmeb(color ~ (1|id),
 #                      relmat = list(id=MMT),
 #                       verbose = 0L, trace=0L,
 #                      data=DT)
@@ -282,9 +273,9 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 ## -----------------------------------------------------------------------------
 
 # 
-# data("DT_wheat")
+# data("DT_wheat", package="enhancer")
 # rownames(GT_wheat) <- rownames(DT_wheat)
-# G <- A.mat(GT_wheat)
+# G <- A.matr(GT_wheat)
 # Y <- data.frame(DT_wheat)
 # 
 # # make the decomposition
@@ -301,7 +292,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # DTd$id<-as.character(DTd$id)
 # head(DTd)
 # 
-# modeld <- lmebreed(X1~ UX + (1|id),
+# modeld <- lmeb(X1~ UX + (1|id),
 #                  relmat=list(id=D),
 #                   verbose = 0L, trace=0L,
 #                  data=DTd)
@@ -311,7 +302,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 # DTn<-data.frame(id = rownames(G) , DT_wheat)
 # DTn$id<-as.character(DTn$id)
 # 
-# modeln <- lmebreed(X1~ (1|id),
+# modeln <- lmeb(X1~ (1|id),
 #                    relmat=list(id=G),
 #                     verbose = 0L, trace=0L,
 #                    data=DTn)
@@ -330,7 +321,7 @@ vc <- VarCorr(mix1); print(vc,comp=c("Variance"))
 ## -----------------------------------------------------------------------------
 
 
-data(DT_expdesigns)
+data(DT_expdesigns, package="enhancer")
 DT <- DT_expdesigns$car1
 DT <- aggregate(yield~set+male+female+rep, data=DT, FUN = mean)
 DT$setf <- as.factor(DT$set)
@@ -358,7 +349,7 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ##############################
 ## REML method
 ##############################
-mix2 <- lmebreed(yield~ setf + setf:repf +
+mix2 <- lmeb(yield~ setf + setf:repf +
                    (1|femalef:malef:setf) + (1|malef:setf), 
               verbose = 0L, trace=0L, data=DT)
 vc <- VarCorr(mix2); print(vc,comp=c("Variance"))
@@ -419,7 +410,7 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 ## REML method
 ##############################
 
-mix2 <- lmebreed(yield~ setf + setf:repf +
+mix2 <- lmeb(yield~ setf + setf:repf +
                (1|femalef:malef:setf) + (1|malef:setf) + 
                (1|femalef:setf),
               verbose = 0L, trace=0L, data=DT)
@@ -436,7 +427,7 @@ Vg=c(Va,Vd); names(Vg) <- c("Va","Vd"); Vg
 
 
 ## -----------------------------------------------------------------------------
-data(DT_cpdata)
+data(DT_cpdata, package="enhancer")
 DT <- DT_cpdata
 GT <- GT_cpdata#[,1:200]
 MP <- MP_cpdata
@@ -453,7 +444,7 @@ k <- 1 # to be used for degrees of freedom (number of levels in fixed effects)
 # MMTinv<-solve( MMT ) ## inverse
 # MTMMTinv<-t(M)%*%MMTinv # M' %*% (M'M)-
 # 
-# mix.part <- lmebreed(color ~ (1|id) + (1|Rowf) + (1|Colf),
+# mix.part <- lmeb(color ~ (1|id) + (1|Rowf) + (1|Colf),
 #                      relmat = list(id=MMT),
 #                       verbose = 0L, trace=0L,
 #                      data=DT)

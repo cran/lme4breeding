@@ -50,6 +50,7 @@ Douglas Bates, Martin Maechler, Ben Bolker, Steve Walker (2015). Fitting Linear 
 
 \examples{
 
+data(DT_big, package="enhancer")
 DT = DT_big
 M = apply(M_big,2,as.numeric)
 rownames(M) <- rownames(M_big)
@@ -62,7 +63,7 @@ DTu <- droplevels(DT[setdiff(1:nrow(DT), nas),])
 DTb <- balanceData(data=DTu, slope = "id", intercept = c("envf","repf"))
 DTb$value <- imputev(x=DTb$value, by=DTb$env)
 
-# now this dataset can be used with the argument 'rotation=TRUE' in lmebreed
+# now this dataset can be used with the argument 'rotation=TRUE' in lmeb
 
 }
-\seealso{\code{\link{lmebreed}}-- the core function of the package }
+\seealso{\code{\link{lmeb}}-- the core function of the package }

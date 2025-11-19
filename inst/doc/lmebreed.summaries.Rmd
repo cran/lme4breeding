@@ -29,11 +29,11 @@ library(lme4breeding)
 ```
 
 ```{r}
-data(DT_example)
+data(DT_example, package="enhancer")
 DT <- DT_example
 A <- A_example
 
-ans1 <- lmebreed(Yield~ (1|Name) + (1|Env) + 
+ans1 <- lmeb(Yield~ (1|Name) + (1|Env) + 
                    (1|Env:Name) + (1|Env:Block),
              verbose = FALSE, data=DT)
 ```
@@ -59,8 +59,8 @@ head(PEV$Name)
 Alternatively, you can extract the predicted error variance matrix (inverse of the coefficient matrix) and extract the standard error from coefficients taking the square root from the diagonal elements of the matrix.
 
 ```{r}
-Ci <- getCi(ans1)
-Matrix::image(Ci)
+condVarAns <- condVarRotated(ans1)
+Matrix::image(condVarAns)
 ```
 
 This matrix is also included in the attributes of the object returned by the `ranef()` function.

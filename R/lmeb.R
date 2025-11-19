@@ -1,13 +1,13 @@
 #### "relmat" class methods
-lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL, 
+lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), start = NULL, 
                       verbose = 1L, subset, weights, na.action, offset, contrasts = NULL,
                       calc.derivs=FALSE, nIters=100,
                       # new params
                       family = NULL, relmat = list(),  addmat=list(), trace=1L,
-                      dateWarning=TRUE, rotation=FALSE, rotationK=NULL, coefOutRotation=8, 
+                      dateWarning=TRUE, rotation=FALSE, rotationK=NULL, coefOutRotation=Inf, 
                       returnFormula=FALSE, suppressOpt=FALSE, ...)
 {
-  my.date <- "2026-01-01" # expiry date
+  my.date <- "2026-02-01" # expiry date
   your.date <- Sys.Date()
   
   ## if your month is greater than my month you are outdated
@@ -34,6 +34,31 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
   mc <- match.call()
   lmerc <- mc  # create a call to lmer (we need it twice)
   
+  ## >>>>>>>>>>>>
+  ## >>>>>>>>>>>> add addmat variables
+  if( any( names(addmat) %in% all.vars(formula) ) ){ # at least one addmat
+    for(iAddMat in names(addmat)){ # iAddMat = names(addmat)[1]
+      if(!missing(data)){
+        if(is.list(addmat[[iAddMat]])){ # indirect genetic effects so addmat is a list nested in another list
+          Zaddmat <- addmat[[iAddMat]][[1]]
+        }else{Zaddmat <- addmat[[iAddMat]]} # simple list of addmats
+        nTimes <- nrow(data)/ncol(Zaddmat) + 2
+        data[,iAddMat] <- (rep(colnames(Zaddmat), nTimes ))[1:nrow(data)]
+        Zaddmat <- NULL
+      }else{
+        checkExistIAddMat <- exists(iAddMat)
+        if(!checkExistIAddMat){ # if doesn't exist the variable in the environment create
+          if(is.list(addmat[[iAddMat]])){ # indirect genetic effects so addmat is a list nested in another list
+            Zaddmat <- addmat[[iAddMat]][[1]]
+          }else{Zaddmat <- addmat[[iAddMat]]} # simple list of addmats
+          respy <- get(all.vars(formula)[1]) # get response variable
+          nTimes <- length(respy)/ncol(Zaddmat) + 2 # how many times to repeate a vector
+          newVariable <- (rep(colnames(Zaddmat), nTimes ))[1:length(respy)]
+          assign(iAddMat, newVariable); Zaddmat <- NULL
+        }else{stop(paste("Your variable",iAddMat,"does not exist in the environment and you have not provided a data argument."), call. = FALSE)}
+      }
+    }
+  }
   ## >>>>>>>>>>>> 
   ## >>>>>>>>>>>> create a new formula (lme4 cannot interpret properly || )
   '%!in%' <- function(x,y)!('%in%'(x,y))
@@ -47,7 +72,6 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
     names(classDT) <- vars
   }
   j <- paste(deparse(formula), collapse="")
-  
   match0 <- gregexpr("\\(([^()]|\\([^()]*\\))*\\)",j,perl=TRUE)
   extracted <- regmatches(j,match0)[[1]]
   randomTerms <- gsub("^\\(|\\)$","", extracted)
@@ -71,13 +95,13 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
         if( classDT[interceptK] %in% c("factor","character") ){ # if is a character of factor get levels and add
           
           if(!missing(data)){ # we can add the dummy variable to the data
-            variableForInterK <- gsub("[^[:alnum:]]", "", data[,interceptK]) # we remove special characters from intercept variable
+            variableForInterK <- gsub("[^a-zA-Z0-9._]", "", data[,interceptK]) # we remove special characters from intercept variable except dots or underscores
             # variableForInterK <- gsub("[+-]","",data[,interceptK])
             Z <- smm(variableForInterK) # add new dummy columns
             for(l in 1:ncol(Z)){data[,colnames(Z)[l]] <- Z[,l]}
           }else{ # we have to create the variables and put them in the environment
             # variableForInterK <- get(interceptK)
-            variableForInterK <- gsub("[^[:alnum:]]", "", get(interceptK)) # we remove special characters from intercept variable
+            variableForInterK <- gsub("[^a-zA-Z0-9._]", "", get(interceptK)) # we remove special characters from intercept variable except dots or underscores
             Z <- smm(variableForInterK)
             for(l in 1:ncol(Z)){assign(colnames(Z)[l], Z[,l] )}
           }
@@ -167,8 +191,8 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
       return(mm)
     }else{
       suppressWarnings( mm <- eval.parent(lmerc), classes = "warning")
-      cls <- if (gaus){"lmerlmebreed"}else{"glmerlmebreed"} 
-      # put it in a lmebreed object
+      cls <- if (gaus){"lmerMod"}else{"glmerMod"} 
+      # put it in a lmeb object
       ans <- do.call(new, list(Class=cls, relfac=list(), udu=list(), 
                                frame=mm@frame, flist=mm@flist, cnms=mm@cnms, Gp=mm@Gp,
                                theta=mm@theta, beta=mm@beta,u=mm@u,lower=mm@lower,
@@ -198,6 +222,10 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
   if(rotation){ # if user want rotation we need to impute in advance
     if(!missing(data)){
       lmerc$data <- data
+      missed <- which(is.na(data[,response]))
+      if(length(missed)>0){
+        if(trace){message(magenta("* Response imputed for rotation."))}
+      }
       lmerc$data[,response] <- imputev(data[,response])
     }
   }
@@ -229,28 +257,38 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
         idsOrdered <- as.character(unique(lmod$fr[,names(relmat)[iRel]])) # when we rotate we need to have relmat already ordered before creating the matrices
         relmat[[iRel]] = relmat[[iRel]][ idsOrdered , idsOrdered ]
       }
+      if(trace){message(magenta("* Rotation of response step."))}
       # only the first relmat will be used so if more, the rotation will only work if it is the same relmat in the next random effects
       udu <- umat(formula=as.formula(paste("~", paste(names(relmat), collapse = "+"))), relmat = relmat, 
                   data=lmod$fr, addmat = addmat, k=rotationK)
       # if rotation we impute the response
       lmod$fr[,response] <- imputev(x=lmod$fr[,response],method="median")#, by=data[udu$effect])
-      newValues <- udu$Utn %*% Matrix::Matrix(lmod$fr[,response])
+      
+      Ut <- t(udu$U[[1]]) # extract Ut
+      U <- udu$U[[1]] # extract U
+      sx0 <- seq(1,length(lmod$fr[,response]), ncol(Ut) ) # start of each piece
+      ex0 <- seq(ncol(Ut),length(lmod$fr[,response]), ncol(Ut) ) # end of each piece
+      newValues <- Matrix::Matrix(lmod$fr[,response])
+      for(iPiece in 1:length(sx0)){ # rotate response piece by piece
+        newValues[sx0[iPiece]:ex0[iPiece],] <- Ut %*% newValues[sx0[iPiece]:ex0[iPiece],]
+      }
+      # newValues <- udu$Utn %*% Matrix::Matrix(lmod$fr[,response])
       newValues <- newValues[,1]
+      
       outlier <- grDevices::boxplot.stats(x=newValues,coef=coefOutRotation )$out
       if(length(outlier) > 0){newValues[which(newValues %in% outlier)] = mean(newValues[which(newValues %!in% outlier)])}
       lmod$fr[,response] <- newValues
-      if(trace){message(magenta("* Rotation of response finished."))}
+      if(trace){message(magenta("* Cholesky of relmats step."))}
       for(iD in names(udu$D)){
         relmat[[iD]] <- Matrix::chol(udu$D[[iD]])
       }
       udu$newValues <- newValues
       # lmerc$data <- data
-      if(trace){message(magenta("* Cholesky decomposition finished."))}
     }else{ # classical approach, just cholesky
+      if(trace){message(magenta("* Cholesky of relmats step."))}
       for (i in seq_along(relmat)) {
         relmat[[i]] <- Matrix::chol(relmat[[i]])
       }
-      if(trace){message(magenta("* Cholesky decomposition finished."))}
     }
   }
   
@@ -266,16 +304,17 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
   ## transform X if rotation is needed
   if(length(relmat) > 0){
     if(rotation){
-      if(ncol(udu$Utn) != nrow(lmod$X)){stop("Rotation approach requires your dataset to be balanced and imputed.")}
-      lmod$X <- (udu$Utn %*% lmod$X) * lmod$X
+      for(iPiece in 1:length(sx0)){ # rotate X piece by piece
+        lmod$X[sx0[iPiece]:ex0[iPiece],] <- Ut %*% lmod$X[sx0[iPiece]:ex0[iPiece],]
+      }
+      # lmod$X <- udu$Utn %*% lmod$X # previous approach
       if(trace){message(magenta("* Rotation applied to the X matrix."))}
-      udu$Utn <- NULL # avoid storing a big matrix after the multiplication
     }
   }
   ##############################
-  
   # >>>>>>>>>> apply addmat (additional matrices)
   for (i in seq_along(addmat)) {
+    if(trace){message(magenta("* Merging additional matrices."))}
     if(!missing(data)){
       goodRecords <- which(!is.na(data[,response]))
     }else{
@@ -287,7 +326,7 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
       ind <- (lmod$reTrms$Gp)[tn0[j]:(tn0[j]+1L)]
       rowsi <- (ind[1]+1L):ind[2]
       covariate <- unlist(lmod$reTrms$cnms[tn0])[j]
-      if(covariate %in% names(data)){ # if is a random regression
+      if(covariate %in% colnames(lmod$fr)){ # if is a random regression
         covariateZ <- Matrix::sparse.model.matrix(as.formula(paste("~",covariate,"-1")), data=lmod$fr)
         if(is.list(addmat[[i]])){ # user has different matrices for the same effect (e.g., indirect genetic effects)
           provZ <- addmat[[i]][[j]][goodRecords,]
@@ -302,70 +341,116 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
         Zt[rowsi,] <- provZt[rownames(Zt[rowsi,]),]
       }
     }
-    if(trace){message(magenta("* Additional matrices (addmat) added."))}
   }
   
   # >>>>>>>>> time to apply the relmat
-  for (i in seq_along(relmat)) { # for each relationship matrix
-    tn <- which(match(pnms[i], names(fl)) == asgn) # match relmat names with random effects names
-    for(j in 1:length(tn)){ # for each random effect matching this relationship matrix (diagonal and unstructured models require to multiple all incidence matrices by the same relfactor)
+  namR <- unique(names(lmod$reTrms$cnms))
+  if(any(namR %in% names(relmat) )){
+    if(trace){message(magenta("* Postmultiplying LZ' step."))}
+  }
+  for (i in seq_along(namR)) { # for each random effect readjust # Zt i=2
+    tn <- which(match(namR[i], names(fl)) == asgn) # match relmat names with random effects names
+    # unstructured tn=1, other models tn=n.levels.intercept
+    for(j in 1:length(tn)){ # for each intercept matching this relationship matrix (diagonal and unstructured models require to multiple all incidence matrices by the same relfactor)
       ind <- (lmod$reTrms$Gp)[tn[j]:(tn[j]+1L)] # which columns match this random effect
       rowsi <- (ind[1]+1L):ind[2] # first to last column from Z
-      colnamesRelFac <- colnames(relfac[[i]])
-      
-      if( mean(table(colnamesRelFac)) > 1 ){  # is this complex because we may have a relationship matrix with repeated names
-        toBeRemoved <- character()
-        namesProvRelFac <- character() 
-        foundV <- numeric()
-        for(p in which( rownames(Zt) %in% rownames(relfac[[i]]) ) ){ # p=1
-          found <- which(colnamesRelFac %in% rownames(Zt)[p])
-          found <- setdiff(found, toBeRemoved)[1]
-          toBeRemoved <- c(toBeRemoved, found[1])
-          if(!is.na(found)){
-            foundV <- c(foundV,found)
-            namesProvRelFac <- c(namesProvRelFac, colnamesRelFac[found] )
+      # reorder relfac 
+      if(namR[i] %in% names(relmat) ){ # this random effect has a relationship matrix so we need to adjust
+        colnamesRelFac <- colnames(relfac[[namR[i]]])
+        if( mean(table(colnamesRelFac)) > 1 ){  # is this complex because we may have a relationship matrix with repeated names
+          toBeRemoved <- character()
+          namesProvRelFac <- character() 
+          foundV <- numeric()
+          for(p in which( rownames(Zt) %in% rownames(relfac[[namR[i]]]) ) ){ # p=1
+            found <- which(colnamesRelFac %in% rownames(Zt)[p])
+            found <- setdiff(found, toBeRemoved)[1]
+            toBeRemoved <- c(toBeRemoved, found[1])
+            if(!is.na(found)){
+              foundV <- c(foundV,found)
+              namesProvRelFac <- c(namesProvRelFac, colnamesRelFac[found] )
+            }
+          }
+          provRelFac <- relfac[[namR[i]]][foundV,foundV] 
+          colnames(provRelFac) <- rownames(provRelFac) <- namesProvRelFac
+          relfac[[namR[i]]] <- provRelFac
+        }else{
+          pick <- intersect( rownames(Zt), rownames(relfac[[namR[i]]])  ) # match names in relmat and Z matrix
+          if(length(pick)==0){stop(paste("The names on your relmat does not coincide with the names in your factor",pnms[i],". Maybe you didn't code it as factor?"))}
+          provRelFac <- relfac[[namR[i]]][pick,pick] # only pick portion of relmat that coincides with Z
+        }
+      }
+      # multiply by the provRelFac or by the Utn matrix
+      if( length(lmod$reTrms$cnms[[j]]) == 1 ){ # regular model (intercept || slope) OR (1 | slope )
+        
+        ZtL <- list() # we have to do this because filling by rows a Column-oriented matrix is extremely slow so it is faster to cut and paste
+        
+        if(namR[i] %in% names(relmat) ){ # if random effect has a relationship matrix
+          # left part
+          if(min(rowsi) > 1){ZtL[[1]] <- Zt[1:(min(rowsi)-1),]}
+          # central part
+          provRelFac <- as(as(as( provRelFac,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+          ZtL[[2]] <- provRelFac %*% Zt[rowsi,] 
+          # right part
+          if(max(rowsi) < nrow(Zt)){ZtL[[3]] <- Zt[(max(rowsi)+1):nrow(Zt),]}
+          Zt <- do.call(rbind, ZtL) # bind all
+        }else{ # random effect does not have a relationship matrix
+          if(rotation){  # if Lee and Vander Werf 2016 rotation is requested a non-relationship random effect needs to be adjusted by U
+            # left part
+            if(min(rowsi) > 1){ZtL[[1]] <- Zt[1:(min(rowsi)-1),]}
+            # central part
+            for(iPiece in 1:length(sx0)){ # rotate Z piece by piece
+              Zt[rowsi,sx0[iPiece]:ex0[iPiece]] <- Zt[rowsi,sx0[iPiece]:ex0[iPiece]] %*% U
+            }; ZtL[[2]] <- Zt[rowsi,]
+            # ZtL[[2]] <- Zt[rowsi,] %*% t(udu$Utn)
+            if(trace){message(magenta("* Rotation applied to other Z matrices."))}
+            # right part
+            if(max(rowsi) < nrow(Zt)){ZtL[[3]] <- Zt[(max(rowsi)+1):nrow(Zt),]}
+            Zt <- do.call(rbind, ZtL) # bind all
           }
         }
-        provRelFac <- relfac[[i]][foundV,foundV] 
-        colnames(provRelFac) <- rownames(provRelFac) <- namesProvRelFac
-        relfac[[i]] <- provRelFac
-      }else{
-        pick <- intersect( rownames(Zt), rownames(relfac[[i]])  ) # match names in relmat and Z matrix
-        if(length(pick)==0){stop(paste("The names on your relmat does not coincide with the names in your factor",pnms[i],". Maybe you didn't code it as factor?"))}
-        provRelFac <- relfac[[i]][pick,pick] # only pick portion of relmat that coincides with Z
-      }
-      if(nrow(Zt[rowsi,]) == nrow(provRelFac)){ # regular model (single random intercept)
-        provRelFac <- as(as(as( provRelFac,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
-        ZtL <- list() # we have to do this because filling by rows a Column-oriented matrix is extremely slow so it is faster to cut and paste
-        if(min(rowsi) > 1){ZtL[[1]] <- Zt[1:(min(rowsi)-1),]}
-        ZtL[[2]] <- provRelFac %*% Zt[rowsi,] 
-        if(max(rowsi) < nrow(Zt)){ZtL[[3]] <- Zt[(max(rowsi)+1):nrow(Zt),]}
-        Zt <- do.call(rbind, ZtL)
-      }else{ # complex model (multiple random intercepts)
-        mm <- Matrix::Diagonal( length(lmod$reTrms$cnms[[pnms[i]]]) )
-        # print(mm)
-        # print(rowsi)
-        # print(str(provRelFac))
-        if(length(rowsi) != ncol(provRelFac)*ncol(mm) ){stop(paste("Relationship matrix dimensions of ",pnms[i],"do not conform with the random effect, please review."), call. = FALSE)}
-        provRelFac <- as(as(as( provRelFac,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+        
+      }else{ # complex model (intercept | slope)
+        mm <- Matrix::Diagonal( length(lmod$reTrms$cnms[[j]]) )
         ZtL <- list()
-        if(min(rowsi) > 1){ZtL[[1]] <- Zt[1:(min(rowsi)-1),]}
-        ZtL[[2]] <- Matrix::kronecker(provRelFac, mm, make.dimnames = TRUE) %*% Zt[rowsi,]
-        rownames(ZtL[[2]]) <- rownames(Zt[rowsi,])
-        if(max(rowsi) < nrow(Zt)){ZtL[[3]] <- Zt[(max(rowsi)+1):nrow(Zt),]}
-        Zt <- do.call(rbind, ZtL)
-      }
-    }
-  }
-  
-  if(trace){message(magenta("* Relfactors (relmat) applied to Z"))}
+        if(namR[i] %in% names(relmat) ){ # if random effect has a relmat
+          # left part
+          if(min(rowsi) > 1){ZtL[[1]] <- Zt[1:(min(rowsi)-1),]}
+          # central part
+          if(length(rowsi) != ncol(provRelFac)*ncol(mm) ){stop(paste("Relationship matrix dimensions of ",pnms[i],"do not conform with the random effect, please review."), call. = FALSE)}
+          provRelFac <- as(as(as( provRelFac,  "dMatrix"), "generalMatrix"), "CsparseMatrix")
+          ZtL[[2]] <- Matrix::kronecker(provRelFac, mm, make.dimnames = TRUE) %*% Zt[rowsi,]
+          rownames(ZtL[[2]]) <- rownames(Zt[rowsi,])
+          # right part
+          if(max(rowsi) < nrow(Zt)){ZtL[[3]] <- Zt[(max(rowsi)+1):nrow(Zt),]}
+          Zt <- do.call(rbind, ZtL) # bind all
+        }else{ # if random effect has no relmat
+          if(rotation){  # if Lee and Vander Werf 2016 rotation is requested a non-relationship random effect needs to be adjusted by U
+            # left part
+            if(min(rowsi) > 1){ZtL[[1]] <- Zt[1:(min(rowsi)-1),]}
+            # central part
+            for(iPiece in 1:length(sx0)){ # rotate Z piece by piece
+              Zt[rowsi,sx0[iPiece]:ex0[iPiece]] <- Zt[rowsi,sx0[iPiece]:ex0[iPiece]] %*% U
+            }; ZtL[[2]] <- Zt[rowsi,]
+            # ZtL[[2]] <- Zt[rowsi,] %*% t(udu$Utn)
+            if(trace){message(magenta("* Rotation applied to the Z matrices."))}
+            # right part
+            if(max(rowsi) < nrow(Zt)){ZtL[[3]] <- Zt[(max(rowsi)+1):nrow(Zt),]}
+            Zt <- do.call(rbind, ZtL) # bind all
+          }
+        } # end of: if random effect has no relmat
+        
+      }# end of : type of random effect
+      
+    } # enf of for each intercept
+    provRelFac <- NULL
+  } # end of for each random effect
   
   reTrms <- list(Zt=Zt,theta=if(is.null(start)){lmod$reTrms$theta}else{start},Lambdat=lmod$reTrms$Lambdat,Lind=lmod$reTrms$Lind,
                  lower=lmod$reTrms$lower,flist=lmod$reTrms$flist,cnms=lmod$reTrms$cnms, Gp=lmod$reTrms$Gp)
   lmod <- list(fr=lmod$fr, X=lmod$X, reTrms=reTrms, formula=formula, verbose=verbose,
                start=if(is.null(start)){lmod$reTrms$theta}else{start},
                control=control)
-  # print(str(lmod))
+  
   if(length(control) == 0){
     if(gaus){ # if user calls a gaussian response family
       control <- lmerControl()
@@ -379,7 +464,7 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
   if(returnFormula){ # if user only wants the incidence matrices
     return(lmod)
   }else{
-    if(trace){message(magenta("* Optimizing ..."))}
+    if(trace){message(magenta("* Optimization step ..."))}
     if (gaus) { # gaussian distribution
       lmod$REML = REML # TRUE# resp$REML > 0L
       suppressWarnings( devfun <- do.call(mkLmerDevfun, lmod ), classes = "warning") # creates a deviance function
@@ -392,7 +477,7 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
                                               calc.derivs=lmod$control$calc.derivs,
                                               restart_edge=lmod$control$restart_edge,
                                               boundary.tol=lmod$control$boundary.tol,
-                                              use.last.params=lmod$control$use.last.params, ...)   , classes = "warning") # need to pass control 
+                                              use.last.params=lmod$control$use.last.params)   , classes = "warning") # need to pass control 
       } 
     } else { # exponential family of distributions
       lmod$family <- family
@@ -406,13 +491,13 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
                                                calc.derivs=lmod$control$calc.derivs,
                                                restart_edge=lmod$control$restart_edge,
                                                boundary.tol=lmod$control$boundary.tol,
-                                               use.last.params=lmod$control$use.last.params,  ...)  ) # need to pass control 
+                                               use.last.params=lmod$control$use.last.params)  ) # need to pass control 
       } 
     }
     if(trace){message(magenta("* Done!!"))}
     # make results in a mkMerMod object format
     suppressWarnings( mm <- mkMerMod(environment(devfun), opt, lmod$reTrms, lmod$fr, mc), classes = "warning" )
-    cls <- if (gaus){"lmerlmebreed"}else{"glmerlmebreed"} 
+    cls <- if (gaus){c("lmerMod")}else{c("glmerMod")} 
     ans <- do.call(new, list(Class=cls, relfac=relfac, udu=udu, #goodRecords=goodRecords,
                              frame=mm@frame, flist=mm@flist, cnms=mm@cnms, Gp=mm@Gp,
                              theta=mm@theta, beta=mm@beta,u=mm@u,lower=mm@lower,
@@ -423,16 +508,16 @@ lmebreed <-  function(formula, data, REML = TRUE, control = list(), start = NULL
   
 }
 
-setMethod("ranef", signature(object = "lmebreed"),
-          function(object, condVar = TRUE, drop = FALSE, whichel = names(ans), includePEV=TRUE, ...)  {
+setMethod("ranef", signature(object = "lmeb"),
+          function(object, condVar = TRUE, drop = FALSE, whichel = names(ans), includeCVM=TRUE, ...)  {
             # print("new")
             relmat <- ifelse(length(object@relfac) > 0, TRUE, FALSE)
             if(relmat){rf <- object@relfac}
             ans <- lme4::ranef(object, condVar=FALSE, drop = FALSE) # extracts condVar 1st time
             ans <- ans[whichel]
             if(condVar){
-              mapCi <- mkMmeIndex(object) # rbind(namesBlue, namesBlup)
-              Ci <- getCi(object) # internally we're extracting condVar 2nd time
+              mapCondVar <- mkMmeIndex(object) # rbind(namesBlue, namesBlup)
+              condVarMat <- condVarRotated(object) # internally we're extracting condVar 2nd time
             }
             for (nm in names(object@flist)) { # for each random effect # nm <- names(rf)[1]
               dm <- data.matrix(ans[[nm]])
@@ -455,13 +540,13 @@ setMethod("ranef", signature(object = "lmebreed"),
                 }
               }
               if (condVar){ # if conditional variance was requested put it in our desired shape
-                mapCiNm <- mapCi[which(mapCi$group == nm),]
-                intercepts <- unique(mapCiNm$variable)
-                postVarNm <- matrix(NA, ncol=length(intercepts), nrow=nrow(mapCiNm)/length(intercepts) )
+                mapCondVarNm <- mapCondVar[which(mapCondVar$group == nm),]
+                intercepts <- unique(mapCondVarNm$variable)
+                postVarNm <- matrix(NA, ncol=length(intercepts), nrow=nrow(mapCondVarNm)/length(intercepts) )
                 for(j in 1:length(intercepts)){ # iInter = 1 # intercepts[1]
                   iInter <- intercepts[j]
-                  v <- mapCiNm[which(mapCiNm$variable == iInter), "index"]
-                  postVarNm[,j] <- diag(Ci)[v]
+                  v <- mapCondVarNm[which(mapCondVarNm$variable == iInter), "index"]
+                  postVarNm[,j] <- diag(condVarMat)[v]
                 }
                 rownames(postVarNm) <- rownames(dm)
                 colnames(postVarNm) <- colnames(dm)
@@ -469,145 +554,29 @@ setMethod("ranef", signature(object = "lmebreed"),
               }
               
             }
-            # before returning store the Ci and its names
-            if(all(c(includePEV, condVar))){ # if both are TRUE add the PEV
-              attr(ans, which="PEV") = Ci
-              attr(ans, which="mapCi") = mapCi
+            # before returning store the condVarMat and its names
+            if(all(c(includeCVM, condVar))){ # if both are TRUE add the PEV
+              attr(ans, which="condVarMat") = condVarMat
+              attr(ans, which="mapCondVar") = mapCondVar
             }
             return(ans)
           })
 
-setMethod("fitted", signature(object = "lmebreed"),
+setMethod("fitted", signature(object = "lmeb"),
           function(object, ...) {
             W <- do.call(cbind, getME(object = object, c("X","Z")) )
-            b <- rbind( fixef(object),
+            b <- rbind( as.matrix(fixef(object)),
                         getME(object = object, c("b")) )
             y.hat <- W%*%b
             return(y.hat)
           })
 
 
-setMethod("residuals", signature(object = "lmebreed"),
+setMethod("residuals", signature(object = "lmeb"),
           function(object, ...) {
             getME(object, "y") - fitted(object)
           })
 
-setMethod("predict", signature(object = "lmebreed"),
-          function(object, hyperTable=NULL, classify=NULL, ...)  {
-            
-            if(is.null(classify)){
-              stop("Please provide the classify argument to build the D matrix.", call. = FALSE )
-            }
-            '%!in%' <- function(x,y)!('%in%'(x,y))
-            if(is.null(hyperTable)){ # default rules for the hypertable
-              message(magenta("hyperTable argument not provided. Building a hyper table based on the classify argument. Please check the output slot 'hyperTable' to ensure that the different effects have been included and average as you expected."))
-              hyperTable <- Dtable(object)
-              # if the user wants a simple averaging  (no include) we add 1s to all rows and 'average'
-              hyperTable$average[which(hyperTable$type == "fixed")]=1
-              # if the group hypertable matches perfectly the classify we do 'include'
-              perfect <- which(hyperTable$group %in% classify)
-              hyperTable$include[perfect]=1
-              hyperTable$average[perfect]=0
-              # if the group hypertable includes an intercept we do 'include'
-              hyperTable$include[which(hyperTable$group %in% "(Intercept)")]=1
-              # if the group hypertable matches imperfectly the classify we do 'include' and 'average'
-              imperfect <- which( unlist( lapply(as.list(hyperTable$group ), function(x){
-                xx <- strsplit(x,split=":")[[1]]
-                myMatch <- length(which( xx %in% classify ))
-                return(myMatch)
-              })
-              ) > 0)
-              imperfect <- setdiff(imperfect, perfect)
-              if(length(imperfect) > 0){
-                hyperTable$include[imperfect]=1
-                hyperTable$average[imperfect]=1
-              }
-            }
-            # get all information from the model
-            BLUP <- ranef(object, condVar=TRUE)
-            # get D table information
-            mapCi <- attr(BLUP, which="mapCi")
-            # get inverse of coefficient matrix
-            Ci <- attr(BLUP, which="PEV")
-            # get coefficients
-            b <- c( 
-              as.vector( fixef(object) ),
-              unlist( lapply(BLUP, function(x){
-                unlist(lapply(x, function(y){as.vector(y)}), use.names = FALSE )
-              }), use.names = FALSE )
-            )
-            # create the D matrix of linear combination
-            
-            classifys <- unique(c( all.vars(as.formula(paste("~",classify,"-1"))), classify))
-            Zd <- Matrix::sparse.model.matrix(as.formula(paste("~",classify,"-1")), data=object@frame ) 
-            levsOr <- colnames(Zd)
-            for(iClassify in classifys){
-              colnames(Zd) <- gsub(iClassify,"",colnames(Zd))
-            }
-            levs <- colnames(Zd)
-            D <- Matrix::Matrix(0, ncol=length(b), nrow=length(levs))
-            rownames(D) <- levs
-            # now add the rules specified in the hyperTable
-            for(iRow in 1:nrow(hyperTable)){ # iRow=2
-              iVar <- hyperTable[iRow,"variable"]
-              iGroup <- hyperTable[iRow,"group"]
-              # if we want to 'include' (nested we decide if we average or not)
-              if(hyperTable[iRow,"include"]>0){
-                v <- which(mapCi[,"variable"]==iVar ) # match the intercept
-                m <- which( unlist(lapply(as.list(mapCi[,"group"]), function(x){length(which( c( strsplit(x, split = ":")[[1]], x )== iGroup ))} )) > 0 ) # match the slope
-                v <- intersect(v,m) # columns involving in one way or another the slope within this intecept: hyperTable[iRow,"group"]
-                for (jRow in 1:nrow(D)) { # jRow=3
-                  ## direct match (same variable/intercept and group/slope)
-                  w <- which( unlist( lapply(as.list(mapCi[,"level"]), function(x){
-                    length( which(strsplit(x, split = ":")[[1]] %in%
-                                    c(
-                                      rownames(D)[jRow], 
-                                      levsOr[jRow],
-                                      strsplit(rownames(D)[jRow], split = ":")[[1]],
-                                      strsplit(levsOr[jRow], split = ":")[[1]],
-                                      "(Intercept)"
-                                    )
-                    ) )
-                  } ) ) > 0 )
-                  
-                  myMatch <- intersect(v,w)
-                  if (length(myMatch) > 0) {
-                    D[jRow, myMatch] = 1
-                  }
-                  
-                  ## indirect match
-                }
-                # in addition to include we ask to average
-                if(hyperTable[iRow,"average"]>0){
-                  nReps <- max(apply(D[,v,drop=FALSE],1,function(x){length(which(x>0))}))
-                  D[, v] = D[, v]/nReps
-                }
-              }
-              # if simple averaging we just add 1s to all rows first, 
-              # then we divide over the number of replicates for that effect
-              if(hyperTable[iRow,"average"]>0 & hyperTable[iRow,"include"]==0){
-                v <- which(mapCi[,"variable"]==iVar & mapCi[,"group"]==iGroup )
-                D[, v] = 1
-                nReps <- max(apply(D[,v,drop=FALSE],1,function(x){length(which(x>0))}))
-                if(hyperTable[iRow,"type"] == "fixed"){
-                  # if averaging effect we need to check if intercept exist and add it
-                  nReps <- nReps + length(which(mapCi[,"level"] %in% "(Intercept)"))
-                }
-                D[, v, drop=FALSE] =  D[, v, drop=FALSE]/nReps
-              }
-              ## end of rules
-            }
-            # compute the predicted values and std errors
-            predicted.value <- D %*% b
-            vcov <- D %*% Ci %*% t(D)
-            std.error <- sqrt(diag(vcov))
-            pvals <- data.frame(id = rownames(D),
-                                predicted.value = predicted.value[,1], 
-                                std.error = std.error)
-            # compile results
-            ans <- list(pvals=pvals, b=b, Ci=Ci, D=D, mapCi=mapCi, hyperTable=hyperTable, classify=classify )
-            return(ans)
-          })
 
 
 

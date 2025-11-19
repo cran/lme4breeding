@@ -12,7 +12,7 @@
 
 <meta name="author" content="Giovanny Covarrubias-Pazaran" />
 
-<meta name="date" content="2025-10-17" />
+<meta name="date" content="2025-11-19" />
 
 <title>Quantitative genetics using the lme4breeding package</title>
 
@@ -342,7 +342,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Quantitative genetics using the
 lme4breeding package</h1>
 <h4 class="author">Giovanny Covarrubias-Pazaran</h4>
-<h4 class="date">2025-10-17</h4>
+<h4 class="date">2025-11-19</h4>
 
 
 
@@ -407,11 +407,11 @@ effect (e.g., genomic-additive relationship matrices).</p>
 <p>The following dataset has 41 potato lines evaluated in 5 locations
 across 3 years in an RCBD design. We show how to fit the model and
 extract the variance components to calculate the <span class="math inline">\(h^2\)</span>.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">data</span>(DT_example)</span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">data</span>(DT_example, <span class="at">package=</span><span class="st">&quot;enhancer&quot;</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_example</span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>A <span class="ot">&lt;-</span> A_example</span>
 <span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>ans1 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield<span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>Name) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Env) <span class="sc">+</span> </span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>ans1 <span class="ot">&lt;-</span> <span class="fu">lmeb</span>(Yield<span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>Name) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Env) <span class="sc">+</span> </span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>                   (<span class="dv">1</span><span class="sc">|</span>Env<span class="sc">:</span>Name) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Env<span class="sc">:</span>Block),</span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>              <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>, <span class="at">data=</span>DT)</span></code></pre></div>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
@@ -446,12 +446,12 @@ A matrix at the same time becomes cumbersome.</p>
 addition we have genetic markers. Now we can fit the model and estimate
 the genomic heritability that explains a portion of the additive genetic
 variance (with high marker density <span class="math inline">\(\sigma^2_A\)</span> = <span class="math inline">\(\sigma^2_{markers}\)</span>)</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">data</span>(DT_cpdata)</span>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">data</span>(DT_cpdata, <span class="at">package=</span><span class="st">&quot;enhancer&quot;</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_cpdata</span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>GT <span class="ot">&lt;-</span> GT_cpdata</span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>MP <span class="ot">&lt;-</span> MP_cpdata</span>
 <span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="do">#### create the variance-covariance matrix</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">A.mat</span>(GT) <span class="co"># additive relationship matrix</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">A.matr</span>(GT) <span class="co"># additive relationship matrix</span></span>
 <span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>A <span class="ot">&lt;-</span> A <span class="sc">+</span> <span class="fu">diag</span>(<span class="fl">1e-4</span>, <span class="fu">ncol</span>(A), <span class="fu">ncol</span>(A))</span>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="do">#### look at the data and fit the model</span></span>
 <span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="fu">head</span>(DT)</span></code></pre></div>
@@ -462,7 +462,7 @@ variance (with high marker density <span class="math inline">\(\sigma^2_A\)</spa
 ## P006 P006   6   1 2014 0.13408561 202.96     48.24  687.172    6    1
 ## P007 P007   7   1 2014 0.13519278 174.74     45.83  601.322    7    1
 ## P008 P008   8   1 2014 0.17406685 194.16     44.63  656.379    8    1</code></pre>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>mix1 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield<span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>id) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Rowf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Colf),</span>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>mix1 <span class="ot">&lt;-</span> <span class="fu">lmeb</span>(Yield<span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>id) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Rowf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Colf),</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                 <span class="at">relmat=</span><span class="fu">list</span>(<span class="at">id=</span>A),</span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                 <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>,</span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>                 <span class="at">data=</span>DT)</span>
@@ -491,7 +491,7 @@ variance is the same across locations may be too naive. Because of that,
 specifying a general genetic component and a location-specific genetic
 variance is the way to go.</p>
 <p>We estimate variance components for specific environments.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">data</span>(DT_example)</span>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">data</span>(DT_example, <span class="at">package=</span><span class="st">&quot;enhancer&quot;</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_example</span>
 <span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>A <span class="ot">&lt;-</span> A_example</span>
 <span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="fu">head</span>(DT)</span></code></pre></div>
@@ -503,21 +503,21 @@ variance is the way to go.</p>
 ## 68           MSR169-8Y CA.2013  CA 2013 CA.2013.1     5 -1.469051
 ## 103         AC05153-1W CA.2013  CA 2013 CA.2013.1     6 -1.307167</code></pre>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="do">## Main (M) + Diagonal (DIAG) model</span></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>ansCSDG <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield <span class="sc">~</span> Env <span class="sc">+</span> (Env <span class="sc">||</span> Name),</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>ansCSDG <span class="ot">&lt;-</span> <span class="fu">lmeb</span>(Yield <span class="sc">~</span> Env <span class="sc">+</span> (Env <span class="sc">||</span> Name),</span>
 <span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>                    <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">Name =</span> A ),</span>
 <span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>                     <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>, <span class="at">data=</span>DT)</span>
 <span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(ansCSDG); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
 ##  Name     (Intercept)  2.9637 
-##  Name.1   CA2011      10.4264 
-##  Name.2   CA2012       2.6589 
-##  Name.3   CA2013       5.7017 
+##  Name.1   CA.2011     10.4264 
+##  Name.2   CA.2012      2.6589 
+##  Name.3   CA.2013      5.7017 
 ##  Residual              4.3976</code></pre>
 <p>In the previous example we showed how the left side of the formulae
 to specify the covariance structure and the effect on the right side
-<code>(covStructure | effect)</code> in the <code>lmebreed()</code>
-solver. By specifying <code>( CA.2011+CA.2012+CA.2013 || Name)</code> we
-declare a covariance structure for Name between environments. The
+<code>(covStructure | effect)</code> in the <code>lmeb()</code> solver.
+By specifying <code>( CA.2011+CA.2012+CA.2013 || Name)</code> we declare
+a covariance structure for Name between environments. The
 <code>||</code> indicates that we do not want to fit covariance between
 these environments This is considered a CS + DIAG (compound symmetry +
 diagonal) model.</p>
@@ -544,12 +544,12 @@ use the data available to fit a model of the form:</p>
 <p>We estimate variance components for <span class="math inline">\(GCA_1\)</span>, <span class="math inline">\(GCA_2\)</span> and <span class="math inline">\(SCA\)</span> and use them to estimate
 heritability. Additionally BLUPs for GCA and SCA effects can be used to
 predict crosses.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">data</span>(DT_cornhybrids)</span>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">data</span>(DT_cornhybrids, <span class="at">package=</span><span class="st">&quot;enhancer&quot;</span>)</span>
 <span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_cornhybrids</span>
 <span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>DTi <span class="ot">&lt;-</span> DTi_cornhybrids</span>
 <span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>GT <span class="ot">&lt;-</span> GT_cornhybrids</span>
 <span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a></span>
-<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>modFD <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield<span class="sc">~</span>Location <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>GCA1)<span class="sc">+</span>(<span class="dv">1</span><span class="sc">|</span>GCA2)<span class="sc">+</span>(<span class="dv">1</span><span class="sc">|</span>SCA),</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>modFD <span class="ot">&lt;-</span> <span class="fu">lmeb</span>(Yield<span class="sc">~</span>Location <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>GCA1)<span class="sc">+</span>(<span class="dv">1</span><span class="sc">|</span>GCA2)<span class="sc">+</span>(<span class="dv">1</span><span class="sc">|</span>SCA),</span>
 <span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>               <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>, <span class="at">data=</span>DT)</span></code></pre></div>
 <pre><code>## boundary (singular) fit: see help(&#39;isSingular&#39;)</code></pre>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(modFD); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
@@ -597,7 +597,7 @@ using the <code>overlay()</code> function. The specific model here
 is:</p>
 <p><span class="math inline">\(y = X\beta + Zu_g + Zu_s +
 \epsilon\)</span></p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;DT_halfdiallel&quot;</span>)</span>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;DT_halfdiallel&quot;</span>, <span class="at">package=</span><span class="st">&quot;enhancer&quot;</span>)</span>
 <span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_halfdiallel</span>
 <span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a><span class="fu">head</span>(DT)</span></code></pre></div>
 <pre><code>##   rep geno male female     sugar
@@ -612,14 +612,11 @@ is:</p>
 <span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a>DT<span class="sc">$</span>genof <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(DT<span class="sc">$</span>geno)</span>
 <span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a><span class="co"># overlay matrix to be added to the addmat argument</span></span>
 <span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">with</span>(DT, <span class="fu">overlay</span>(femalef,malef) )</span>
-<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a><span class="co"># create inital values for incidence matrix but irrelevant</span></span>
-<span id="cb27-7"><a href="#cb27-7" tabindex="-1"></a><span class="co"># since these will be replaced by admat argument</span></span>
-<span id="cb27-8"><a href="#cb27-8" tabindex="-1"></a>fema <span class="ot">&lt;-</span> (<span class="fu">rep</span>(<span class="fu">colnames</span>(Z), <span class="fu">nrow</span>(DT)))[<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(DT)]</span>
-<span id="cb27-9"><a href="#cb27-9" tabindex="-1"></a><span class="do">#### model using overlay without relationship matrix</span></span>
-<span id="cb27-10"><a href="#cb27-10" tabindex="-1"></a>modh <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(sugar <span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>genof) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>fema),</span>
-<span id="cb27-11"><a href="#cb27-11" tabindex="-1"></a>                 <span class="at">addmat =</span> <span class="fu">list</span>(<span class="at">fema=</span>Z),</span>
-<span id="cb27-12"><a href="#cb27-12" tabindex="-1"></a>              <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>, <span class="at">data=</span>DT)</span>
-<span id="cb27-13"><a href="#cb27-13" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(modh); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a><span class="do">#### model using overlay without relationship matrix</span></span>
+<span id="cb27-7"><a href="#cb27-7" tabindex="-1"></a>modh <span class="ot">&lt;-</span> <span class="fu">lmeb</span>(sugar <span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>genof) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>fema),</span>
+<span id="cb27-8"><a href="#cb27-8" tabindex="-1"></a>                 <span class="at">addmat =</span> <span class="fu">list</span>(<span class="at">fema=</span>Z),</span>
+<span id="cb27-9"><a href="#cb27-9" tabindex="-1"></a>              <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>, <span class="at">data=</span>DT)</span>
+<span id="cb27-10"><a href="#cb27-10" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(modh); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
 ##  genof    (Intercept) 1.8160  
 ##  fema     (Intercept) 5.5088  
@@ -641,19 +638,19 @@ model of the form:</p>
 <p><br></p>
 <p>and takes advantage of the variance covariance matrix for the
 genotype effect known as the additive relationship matrix (A) and
-calculated using the <code>A.mat</code> function to establish
+calculated using the <code>A.matr</code> function to establish
 connections among all individuals and predict the BLUPs for individuals
 that were not measured. The prediction accuracy depends on several
 factors such as the heritability (<span class="math inline">\(h^2\)</span>), training population used (TP), size
 of TP, etc.</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="co"># data(DT_wheat)</span></span>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="co"># data(DT_wheat, package=&quot;enhancer&quot;)</span></span>
 <span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a><span class="co"># DT &lt;- DT_wheat</span></span>
 <span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a><span class="co"># GT &lt;- GT_wheat[,1:200]</span></span>
 <span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a><span class="co"># colnames(DT) &lt;- paste0(&quot;X&quot;,1:ncol(DT))</span></span>
 <span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a><span class="co"># DT &lt;- as.data.frame(DT);DT$line &lt;- as.factor(rownames(DT))</span></span>
 <span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a><span class="co"># # select environment 1</span></span>
 <span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a><span class="co"># rownames(GT) &lt;- rownames(DT)</span></span>
-<span id="cb31-8"><a href="#cb31-8" tabindex="-1"></a><span class="co"># K &lt;- A.mat(GT) # additive relationship matrix</span></span>
+<span id="cb31-8"><a href="#cb31-8" tabindex="-1"></a><span class="co"># K &lt;- A.matr(GT) # additive relationship matrix</span></span>
 <span id="cb31-9"><a href="#cb31-9" tabindex="-1"></a><span class="co"># colnames(K) &lt;- rownames(K) &lt;- rownames(DT)</span></span>
 <span id="cb31-10"><a href="#cb31-10" tabindex="-1"></a><span class="co"># # GBLUP pedigree-based approach</span></span>
 <span id="cb31-11"><a href="#cb31-11" tabindex="-1"></a><span class="co"># set.seed(12345)</span></span>
@@ -663,7 +660,7 @@ of TP, etc.</p>
 <span id="cb31-15"><a href="#cb31-15" tabindex="-1"></a><span class="co"># head(y.trn)</span></span>
 <span id="cb31-16"><a href="#cb31-16" tabindex="-1"></a><span class="co"># ## GBLUP</span></span>
 <span id="cb31-17"><a href="#cb31-17" tabindex="-1"></a><span class="co"># K &lt;- K + diag(1e-4, ncol(K), ncol(K) )</span></span>
-<span id="cb31-18"><a href="#cb31-18" tabindex="-1"></a><span class="co"># ans &lt;- lmebreed(X1 ~ (1|line), </span></span>
+<span id="cb31-18"><a href="#cb31-18" tabindex="-1"></a><span class="co"># ans &lt;- lmeb(X1 ~ (1|line), </span></span>
 <span id="cb31-19"><a href="#cb31-19" tabindex="-1"></a><span class="co">#                 relmat = list(line=K),</span></span>
 <span id="cb31-20"><a href="#cb31-20" tabindex="-1"></a><span class="co">#                  verbose = 0L, trace=0L,</span></span>
 <span id="cb31-21"><a href="#cb31-21" tabindex="-1"></a><span class="co">#                 data=y.trn)</span></span>
@@ -687,13 +684,12 @@ of TP, etc.</p>
 <span id="cb31-39"><a href="#cb31-39" tabindex="-1"></a><span class="co"># ## rrBLUP</span></span>
 <span id="cb31-40"><a href="#cb31-40" tabindex="-1"></a><span class="co"># M &lt;- tcrossprod(GT)</span></span>
 <span id="cb31-41"><a href="#cb31-41" tabindex="-1"></a><span class="co"># xx &lt;- with(y.trn, redmm(x=line, M=M, nPC=100, returnLam = TRUE))</span></span>
-<span id="cb31-42"><a href="#cb31-42" tabindex="-1"></a><span class="co"># custom &lt;- (rep(colnames(Z), nrow(DT)))[1:nrow(DT)]</span></span>
-<span id="cb31-43"><a href="#cb31-43" tabindex="-1"></a><span class="co"># ansRRBLUP &lt;- lmebreed(X1 ~ (1|custom),  verbose = 0L, trace=0L,</span></span>
-<span id="cb31-44"><a href="#cb31-44" tabindex="-1"></a><span class="co">#                       addmat = list(custom=Z),</span></span>
-<span id="cb31-45"><a href="#cb31-45" tabindex="-1"></a><span class="co">#                       data=y.trn)</span></span>
-<span id="cb31-46"><a href="#cb31-46" tabindex="-1"></a><span class="co"># re &lt;- ranef(ansRRBLUP)$custom</span></span>
-<span id="cb31-47"><a href="#cb31-47" tabindex="-1"></a><span class="co"># u = tcrossprod(xx$Lam, t(as.matrix( re[colnames(xx$Lam),] ) ))</span></span>
-<span id="cb31-48"><a href="#cb31-48" tabindex="-1"></a><span class="co"># cor(u[vv,],DT[vv,&quot;X1&quot;], use=&quot;complete&quot;)</span></span></code></pre></div>
+<span id="cb31-42"><a href="#cb31-42" tabindex="-1"></a><span class="co"># ansRRBLUP &lt;- lmeb(X1 ~ (1|custom),  verbose = 0L, trace=0L,</span></span>
+<span id="cb31-43"><a href="#cb31-43" tabindex="-1"></a><span class="co">#                       addmat = list(custom=Z),</span></span>
+<span id="cb31-44"><a href="#cb31-44" tabindex="-1"></a><span class="co">#                       data=y.trn)</span></span>
+<span id="cb31-45"><a href="#cb31-45" tabindex="-1"></a><span class="co"># re &lt;- ranef(ansRRBLUP)$custom</span></span>
+<span id="cb31-46"><a href="#cb31-46" tabindex="-1"></a><span class="co"># u = tcrossprod(xx$Lam, t(as.matrix( re[colnames(xx$Lam),] ) ))</span></span>
+<span id="cb31-47"><a href="#cb31-47" tabindex="-1"></a><span class="co"># cor(u[vv,],DT[vv,&quot;X1&quot;], use=&quot;complete&quot;)</span></span></code></pre></div>
 </div>
 <div id="indirect-genetic-effects" class="section level3">
 <h3>5) Indirect genetic effects</h3>
@@ -703,7 +699,7 @@ variance and covariance components between two or more different random
 effects. We now fit the indirect genetic effects model with covariance
 between DGE and IGE. On top of that we can include a relationship matrix
 for the two random effects that are being forced to co-vary</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">data</span>(DT_ige)</span>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">data</span>(DT_ige, <span class="at">package=</span><span class="st">&quot;enhancer&quot;</span>)</span>
 <span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_ige</span>
 <span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a>A_ige <span class="ot">&lt;-</span> A_ige <span class="sc">+</span> <span class="fu">diag</span>(<span class="fl">1e-4</span>, <span class="fu">ncol</span>(A_ige), <span class="fu">ncol</span>(A_ige) )</span>
 <span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a><span class="co"># Define 2 dummy variables to make a fake covariance</span></span>
@@ -715,15 +711,12 @@ for the two random effects that are being forced to co-vary</p>
 <span id="cb32-10"><a href="#cb32-10" tabindex="-1"></a><span class="co"># Create the incidence matrix for the second random effect</span></span>
 <span id="cb32-11"><a href="#cb32-11" tabindex="-1"></a>Zn <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">sparse.model.matrix</span>( <span class="sc">~</span> neighbour<span class="dv">-1</span>, <span class="at">data=</span>DT )</span>
 <span id="cb32-12"><a href="#cb32-12" tabindex="-1"></a><span class="fu">colnames</span>(Zn) <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;neighbour&quot;</span>,<span class="st">&quot;&quot;</span>, <span class="fu">colnames</span>(Zn))</span>
-<span id="cb32-13"><a href="#cb32-13" tabindex="-1"></a><span class="co"># Make inital values for incidence matrix but irrelevant</span></span>
-<span id="cb32-14"><a href="#cb32-14" tabindex="-1"></a><span class="co"># since these will be replaced by the addmat argument</span></span>
-<span id="cb32-15"><a href="#cb32-15" tabindex="-1"></a>both <span class="ot">&lt;-</span> (<span class="fu">rep</span>(<span class="fu">colnames</span>(Zf), <span class="fu">nrow</span>(DT)))[<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(DT)]</span>
-<span id="cb32-16"><a href="#cb32-16" tabindex="-1"></a><span class="co"># Fit the model</span></span>
-<span id="cb32-17"><a href="#cb32-17" tabindex="-1"></a>modIGE <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(trait <span class="sc">~</span> block <span class="sc">+</span> (<span class="dv">0</span><span class="sc">+</span>fn<span class="sc">+</span>nn<span class="sc">|</span>both),</span>
-<span id="cb32-18"><a href="#cb32-18" tabindex="-1"></a>                   <span class="at">addmat =</span> <span class="fu">list</span>(<span class="at">both=</span><span class="fu">list</span>(Zf,Zn)),</span>
-<span id="cb32-19"><a href="#cb32-19" tabindex="-1"></a>                   <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">both=</span>A_ige),</span>
-<span id="cb32-20"><a href="#cb32-20" tabindex="-1"></a>                    <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>, <span class="at">data =</span> DT)</span>
-<span id="cb32-21"><a href="#cb32-21" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(modIGE); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<span id="cb32-13"><a href="#cb32-13" tabindex="-1"></a><span class="co"># Fit the model</span></span>
+<span id="cb32-14"><a href="#cb32-14" tabindex="-1"></a>modIGE <span class="ot">&lt;-</span> <span class="fu">lmeb</span>(trait <span class="sc">~</span> block <span class="sc">+</span> (<span class="dv">0</span><span class="sc">+</span>fn<span class="sc">+</span>nn<span class="sc">|</span>both),</span>
+<span id="cb32-15"><a href="#cb32-15" tabindex="-1"></a>                   <span class="at">addmat =</span> <span class="fu">list</span>(<span class="at">both=</span><span class="fu">list</span>(Zf,Zn)),</span>
+<span id="cb32-16"><a href="#cb32-16" tabindex="-1"></a>                   <span class="at">relmat =</span> <span class="fu">list</span>(<span class="at">both=</span>A_ige),</span>
+<span id="cb32-17"><a href="#cb32-17" tabindex="-1"></a>                    <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>, <span class="at">data =</span> DT)</span>
+<span id="cb32-18"><a href="#cb32-18" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(modIGE); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name Variance Cov      
 ##  both     fn    2611.5           
 ##           nn   16933.5  -6087.189
@@ -767,12 +760,12 @@ will include variance covariance structures in each of the three random
 effects (GCA1, GCA2 and SCA) to be able to predict the crosses that have
 not ocurred yet. We will use the data published by Technow et al. (2015)
 to show how to do prediction of single crosses.</p>
-<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" tabindex="-1"></a><span class="co"># data(DT_technow)</span></span>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" tabindex="-1"></a><span class="co"># data(DT_technow, package=&quot;enhancer&quot;)</span></span>
 <span id="cb40-2"><a href="#cb40-2" tabindex="-1"></a><span class="co"># DT &lt;- DT_technow</span></span>
 <span id="cb40-3"><a href="#cb40-3" tabindex="-1"></a><span class="co"># Md &lt;- (Md_technow*2) - 1</span></span>
 <span id="cb40-4"><a href="#cb40-4" tabindex="-1"></a><span class="co"># Mf &lt;- (Mf_technow*2) - 1</span></span>
-<span id="cb40-5"><a href="#cb40-5" tabindex="-1"></a><span class="co"># Ad &lt;- A.mat(Md)</span></span>
-<span id="cb40-6"><a href="#cb40-6" tabindex="-1"></a><span class="co"># Af &lt;- A.mat(Mf)</span></span>
+<span id="cb40-5"><a href="#cb40-5" tabindex="-1"></a><span class="co"># Ad &lt;- A.matr(Md)</span></span>
+<span id="cb40-6"><a href="#cb40-6" tabindex="-1"></a><span class="co"># Af &lt;- A.matr(Mf)</span></span>
 <span id="cb40-7"><a href="#cb40-7" tabindex="-1"></a><span class="co"># Ad &lt;- Ad + diag(1e-4, ncol(Ad), ncol(Ad))</span></span>
 <span id="cb40-8"><a href="#cb40-8" tabindex="-1"></a><span class="co"># Af &lt;- Af + diag(1e-4, ncol(Af), ncol(Af))</span></span>
 <span id="cb40-9"><a href="#cb40-9" tabindex="-1"></a><span class="co"># # simulate some missing hybrids to predict</span></span>
@@ -780,7 +773,7 @@ to show how to do prediction of single crosses.</p>
 <span id="cb40-11"><a href="#cb40-11" tabindex="-1"></a><span class="co"># vv1 &lt;- which(!is.na(DT$GY))</span></span>
 <span id="cb40-12"><a href="#cb40-12" tabindex="-1"></a><span class="co"># vv2 &lt;- sample(DT[vv1,&quot;hy&quot;], 100)</span></span>
 <span id="cb40-13"><a href="#cb40-13" tabindex="-1"></a><span class="co"># y.trn[which(y.trn$hy %in% vv2),&quot;GY&quot;] &lt;- NA</span></span>
-<span id="cb40-14"><a href="#cb40-14" tabindex="-1"></a><span class="co"># ans2 &lt;- lmebreed(GY ~ (1|dent) + (1|flint),</span></span>
+<span id="cb40-14"><a href="#cb40-14" tabindex="-1"></a><span class="co"># ans2 &lt;- lmeb(GY ~ (1|dent) + (1|flint),</span></span>
 <span id="cb40-15"><a href="#cb40-15" tabindex="-1"></a><span class="co">#                  relmat = list(dent=Ad,</span></span>
 <span id="cb40-16"><a href="#cb40-16" tabindex="-1"></a><span class="co">#                                flint=Af),</span></span>
 <span id="cb40-17"><a href="#cb40-17" tabindex="-1"></a><span class="co">#                   verbose = 0L, trace=0L, data=y.trn)</span></span>
@@ -842,7 +835,7 @@ et al. 2018).</p>
 <p>In this example we assume an unreplicated population where row and
 range information is available which allows us to fit a 2 dimensional
 spline model.</p>
-<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" tabindex="-1"></a><span class="fu">data</span>(DT_cpdata)</span>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" tabindex="-1"></a><span class="fu">data</span>(DT_cpdata, <span class="at">package=</span><span class="st">&quot;enhancer&quot;</span>)</span>
 <span id="cb41-2"><a href="#cb41-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_cpdata</span>
 <span id="cb41-3"><a href="#cb41-3" tabindex="-1"></a><span class="co"># add the units column</span></span>
 <span id="cb41-4"><a href="#cb41-4" tabindex="-1"></a>DT<span class="sc">$</span>units <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(DT))</span>
@@ -851,14 +844,12 @@ spline model.</p>
 <span id="cb41-7"><a href="#cb41-7" tabindex="-1"></a><span class="fu">rownames</span>(Zs) <span class="ot">&lt;-</span> DT<span class="sc">$</span>units</span>
 <span id="cb41-8"><a href="#cb41-8" tabindex="-1"></a><span class="co"># reduce the matrix to its PCs</span></span>
 <span id="cb41-9"><a href="#cb41-9" tabindex="-1"></a>Z <span class="ot">=</span> <span class="fu">with</span>(DT, <span class="fu">redmm</span>(<span class="at">x=</span>units, <span class="at">M=</span>Zs, <span class="at">nPC=</span><span class="dv">100</span>))</span>
-<span id="cb41-10"><a href="#cb41-10" tabindex="-1"></a><span class="co"># create dummy variable</span></span>
-<span id="cb41-11"><a href="#cb41-11" tabindex="-1"></a>spatial <span class="ot">&lt;-</span> (<span class="fu">rep</span>(<span class="fu">colnames</span>(Z), <span class="fu">nrow</span>(DT)))[<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(DT)]</span>
-<span id="cb41-12"><a href="#cb41-12" tabindex="-1"></a><span class="co"># fit model</span></span>
-<span id="cb41-13"><a href="#cb41-13" tabindex="-1"></a>mix1 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(Yield<span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>Rowf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Colf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>spatial),</span>
-<span id="cb41-14"><a href="#cb41-14" tabindex="-1"></a>                 <span class="at">addmat =</span><span class="fu">list</span>(<span class="at">spatial=</span>Z),</span>
-<span id="cb41-15"><a href="#cb41-15" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>,</span>
-<span id="cb41-16"><a href="#cb41-16" tabindex="-1"></a>                 <span class="at">data=</span>DT)</span>
-<span id="cb41-17"><a href="#cb41-17" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(mix1); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
+<span id="cb41-10"><a href="#cb41-10" tabindex="-1"></a><span class="co"># fit model</span></span>
+<span id="cb41-11"><a href="#cb41-11" tabindex="-1"></a>mix1 <span class="ot">&lt;-</span> <span class="fu">lmeb</span>(Yield<span class="sc">~</span> (<span class="dv">1</span><span class="sc">|</span>Rowf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Colf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>spatial),</span>
+<span id="cb41-12"><a href="#cb41-12" tabindex="-1"></a>                 <span class="at">addmat =</span><span class="fu">list</span>(<span class="at">spatial=</span>Z),</span>
+<span id="cb41-13"><a href="#cb41-13" tabindex="-1"></a>                  <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>,</span>
+<span id="cb41-14"><a href="#cb41-14" tabindex="-1"></a>                 <span class="at">data=</span>DT)</span>
+<span id="cb41-15"><a href="#cb41-15" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(mix1); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
 <pre><code>##  Groups   Name        Variance
 ##  spatial  (Intercept)  320.61 
 ##  Colf     (Intercept)  158.29 
@@ -877,12 +868,12 @@ single random effect (genotype; <code>id</code>) although multiple
 effects can be modeled as well. We need to use a variance covariance
 structure for the random effect to be able to obtain the genetic
 covariance among traits.</p>
-<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a><span class="co"># data(DT_cpdata)</span></span>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" tabindex="-1"></a><span class="co"># data(DT_cpdata, package=&quot;enhancer&quot;)</span></span>
 <span id="cb43-2"><a href="#cb43-2" tabindex="-1"></a><span class="co"># DT &lt;- DT_cpdata</span></span>
 <span id="cb43-3"><a href="#cb43-3" tabindex="-1"></a><span class="co"># GT &lt;- GT_cpdata</span></span>
 <span id="cb43-4"><a href="#cb43-4" tabindex="-1"></a><span class="co"># MP &lt;- MP_cpdata</span></span>
 <span id="cb43-5"><a href="#cb43-5" tabindex="-1"></a><span class="co"># #### create the variance-covariance matrix</span></span>
-<span id="cb43-6"><a href="#cb43-6" tabindex="-1"></a><span class="co"># A &lt;- A.mat(GT) # additive relationship matrix</span></span>
+<span id="cb43-6"><a href="#cb43-6" tabindex="-1"></a><span class="co"># A &lt;- A.matr(GT) # additive relationship matrix</span></span>
 <span id="cb43-7"><a href="#cb43-7" tabindex="-1"></a><span class="co"># A &lt;- A + diag(1e-4, ncol(A), ncol(A))</span></span>
 <span id="cb43-8"><a href="#cb43-8" tabindex="-1"></a><span class="co"># #### look at the data and fit the model</span></span>
 <span id="cb43-9"><a href="#cb43-9" tabindex="-1"></a><span class="co"># traits &lt;- c(&quot;color&quot;,&quot;Yield&quot;)</span></span>
@@ -895,7 +886,7 @@ covariance among traits.</p>
 <span id="cb43-16"><a href="#cb43-16" tabindex="-1"></a><span class="co"># DTL &lt;- DTL[with(DTL, order(trait)), ]</span></span>
 <span id="cb43-17"><a href="#cb43-17" tabindex="-1"></a><span class="co"># head(DTL)</span></span>
 <span id="cb43-18"><a href="#cb43-18" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb43-19"><a href="#cb43-19" tabindex="-1"></a><span class="co"># mix1 &lt;- lmebreed(value~ (0+trait|id),</span></span>
+<span id="cb43-19"><a href="#cb43-19" tabindex="-1"></a><span class="co"># mix1 &lt;- lmeb(value~ (0+trait|id),</span></span>
 <span id="cb43-20"><a href="#cb43-20" tabindex="-1"></a><span class="co">#                  relmat=list(id=A),  verbose = 0L, trace=0L,</span></span>
 <span id="cb43-21"><a href="#cb43-21" tabindex="-1"></a><span class="co">#                  data=DTL)</span></span>
 <span id="cb43-22"><a href="#cb43-22" tabindex="-1"></a><span class="co"># vc &lt;- VarCorr(mix1); print(vc,comp=c(&quot;Variance&quot;))</span></span></code></pre></div>
@@ -913,7 +904,7 @@ effects can be obtained by fitting a GBLUP model to reduce the
 computational burden and then recover them by creating some special
 matrices MM’ for GBLUP and M’(M’M)- to recover marker effects. Here we
 show a very easy example using the DT_cpdata:</p>
-<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" tabindex="-1"></a><span class="co"># data(&quot;DT_cpdata&quot;)</span></span>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" tabindex="-1"></a><span class="co"># data(&quot;DT_cpdata&quot;, package=&quot;enhancer&quot;)</span></span>
 <span id="cb45-2"><a href="#cb45-2" tabindex="-1"></a><span class="co"># DT &lt;- as.data.frame(DT_cpdata) </span></span>
 <span id="cb45-3"><a href="#cb45-3" tabindex="-1"></a><span class="co"># M &lt;- GT_cpdata</span></span>
 <span id="cb45-4"><a href="#cb45-4" tabindex="-1"></a><span class="co"># </span></span>
@@ -925,7 +916,7 @@ show a very easy example using the DT_cpdata:</p>
 <span id="cb45-10"><a href="#cb45-10" tabindex="-1"></a><span class="co"># MMTinv&lt;-solve(MMT) ## inverse</span></span>
 <span id="cb45-11"><a href="#cb45-11" tabindex="-1"></a><span class="co"># MTMMTinv&lt;-t(M)%*%MMTinv # M&#39; %*% (M&#39;M)-</span></span>
 <span id="cb45-12"><a href="#cb45-12" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb45-13"><a href="#cb45-13" tabindex="-1"></a><span class="co"># mix.part &lt;- lmebreed(color ~ (1|id),</span></span>
+<span id="cb45-13"><a href="#cb45-13" tabindex="-1"></a><span class="co"># mix.part &lt;- lmeb(color ~ (1|id),</span></span>
 <span id="cb45-14"><a href="#cb45-14" tabindex="-1"></a><span class="co">#                      relmat = list(id=MMT),</span></span>
 <span id="cb45-15"><a href="#cb45-15" tabindex="-1"></a><span class="co">#                       verbose = 0L, trace=0L,</span></span>
 <span id="cb45-16"><a href="#cb45-16" tabindex="-1"></a><span class="co">#                      data=DT)</span></span>
@@ -946,9 +937,9 @@ phenotypic variance matrix V is a diagonal because the relationship
 matrix is the diagonal matrix D from the decomposition that can be
 inverted easily and make multitrait models more feasible.</p>
 <div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb46-2"><a href="#cb46-2" tabindex="-1"></a><span class="co"># data(&quot;DT_wheat&quot;)</span></span>
+<span id="cb46-2"><a href="#cb46-2" tabindex="-1"></a><span class="co"># data(&quot;DT_wheat&quot;, package=&quot;enhancer&quot;)</span></span>
 <span id="cb46-3"><a href="#cb46-3" tabindex="-1"></a><span class="co"># rownames(GT_wheat) &lt;- rownames(DT_wheat)</span></span>
-<span id="cb46-4"><a href="#cb46-4" tabindex="-1"></a><span class="co"># G &lt;- A.mat(GT_wheat)</span></span>
+<span id="cb46-4"><a href="#cb46-4" tabindex="-1"></a><span class="co"># G &lt;- A.matr(GT_wheat)</span></span>
 <span id="cb46-5"><a href="#cb46-5" tabindex="-1"></a><span class="co"># Y &lt;- data.frame(DT_wheat)</span></span>
 <span id="cb46-6"><a href="#cb46-6" tabindex="-1"></a><span class="co"># </span></span>
 <span id="cb46-7"><a href="#cb46-7" tabindex="-1"></a><span class="co"># # make the decomposition</span></span>
@@ -965,7 +956,7 @@ inverted easily and make multitrait models more feasible.</p>
 <span id="cb46-18"><a href="#cb46-18" tabindex="-1"></a><span class="co"># DTd$id&lt;-as.character(DTd$id)</span></span>
 <span id="cb46-19"><a href="#cb46-19" tabindex="-1"></a><span class="co"># head(DTd)</span></span>
 <span id="cb46-20"><a href="#cb46-20" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb46-21"><a href="#cb46-21" tabindex="-1"></a><span class="co"># modeld &lt;- lmebreed(X1~ UX + (1|id),</span></span>
+<span id="cb46-21"><a href="#cb46-21" tabindex="-1"></a><span class="co"># modeld &lt;- lmeb(X1~ UX + (1|id),</span></span>
 <span id="cb46-22"><a href="#cb46-22" tabindex="-1"></a><span class="co">#                  relmat=list(id=D),</span></span>
 <span id="cb46-23"><a href="#cb46-23" tabindex="-1"></a><span class="co">#                   verbose = 0L, trace=0L,</span></span>
 <span id="cb46-24"><a href="#cb46-24" tabindex="-1"></a><span class="co">#                  data=DTd)</span></span>
@@ -975,7 +966,7 @@ inverted easily and make multitrait models more feasible.</p>
 <span id="cb46-28"><a href="#cb46-28" tabindex="-1"></a><span class="co"># DTn&lt;-data.frame(id = rownames(G) , DT_wheat)</span></span>
 <span id="cb46-29"><a href="#cb46-29" tabindex="-1"></a><span class="co"># DTn$id&lt;-as.character(DTn$id)</span></span>
 <span id="cb46-30"><a href="#cb46-30" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb46-31"><a href="#cb46-31" tabindex="-1"></a><span class="co"># modeln &lt;- lmebreed(X1~ (1|id),</span></span>
+<span id="cb46-31"><a href="#cb46-31" tabindex="-1"></a><span class="co"># modeln &lt;- lmeb(X1~ (1|id),</span></span>
 <span id="cb46-32"><a href="#cb46-32" tabindex="-1"></a><span class="co">#                    relmat=list(id=G),</span></span>
 <span id="cb46-33"><a href="#cb46-33" tabindex="-1"></a><span class="co">#                     verbose = 0L, trace=0L,</span></span>
 <span id="cb46-34"><a href="#cb46-34" tabindex="-1"></a><span class="co">#                    data=DTn)</span></span>
@@ -1002,7 +993,7 @@ the classical Expected Mean Squares method and the REML methods from
 lme4breeding and how these two are equivalent.</p>
 <div id="north-carolina-design-i-nested-design" class="section level4">
 <h4>North Carolina Design I (Nested design)</h4>
-<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a><span class="fu">data</span>(DT_expdesigns)</span>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a><span class="fu">data</span>(DT_expdesigns, <span class="at">package=</span><span class="st">&quot;enhancer&quot;</span>)</span>
 <span id="cb47-2"><a href="#cb47-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_expdesigns<span class="sc">$</span>car1</span>
 <span id="cb47-3"><a href="#cb47-3" tabindex="-1"></a>DT <span class="ot">&lt;-</span> <span class="fu">aggregate</span>(yield<span class="sc">~</span>set<span class="sc">+</span>male<span class="sc">+</span>female<span class="sc">+</span>rep, <span class="at">data=</span>DT, <span class="at">FUN =</span> mean)</span>
 <span id="cb47-4"><a href="#cb47-4" tabindex="-1"></a>DT<span class="sc">$</span>setf <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(DT<span class="sc">$</span>set)</span>
@@ -1043,7 +1034,7 @@ lme4breeding and how these two are equivalent.</p>
 <div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" tabindex="-1"></a><span class="do">##############################</span></span>
 <span id="cb51-2"><a href="#cb51-2" tabindex="-1"></a><span class="do">## REML method</span></span>
 <span id="cb51-3"><a href="#cb51-3" tabindex="-1"></a><span class="do">##############################</span></span>
-<span id="cb51-4"><a href="#cb51-4" tabindex="-1"></a>mix2 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(yield<span class="sc">~</span> setf <span class="sc">+</span> setf<span class="sc">:</span>repf <span class="sc">+</span></span>
+<span id="cb51-4"><a href="#cb51-4" tabindex="-1"></a>mix2 <span class="ot">&lt;-</span> <span class="fu">lmeb</span>(yield<span class="sc">~</span> setf <span class="sc">+</span> setf<span class="sc">:</span>repf <span class="sc">+</span></span>
 <span id="cb51-5"><a href="#cb51-5" tabindex="-1"></a>                   (<span class="dv">1</span><span class="sc">|</span>femalef<span class="sc">:</span>malef<span class="sc">:</span>setf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>malef<span class="sc">:</span>setf), </span>
 <span id="cb51-6"><a href="#cb51-6" tabindex="-1"></a>              <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>, <span class="at">data=</span>DT)</span>
 <span id="cb51-7"><a href="#cb51-7" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">VarCorr</span>(mix2); <span class="fu">print</span>(vc,<span class="at">comp=</span><span class="fu">c</span>(<span class="st">&quot;Variance&quot;</span>))</span></code></pre></div>
@@ -1128,7 +1119,7 @@ we arrive to the same results.</p>
 <span id="cb61-2"><a href="#cb61-2" tabindex="-1"></a><span class="do">## REML method</span></span>
 <span id="cb61-3"><a href="#cb61-3" tabindex="-1"></a><span class="do">##############################</span></span>
 <span id="cb61-4"><a href="#cb61-4" tabindex="-1"></a></span>
-<span id="cb61-5"><a href="#cb61-5" tabindex="-1"></a>mix2 <span class="ot">&lt;-</span> <span class="fu">lmebreed</span>(yield<span class="sc">~</span> setf <span class="sc">+</span> setf<span class="sc">:</span>repf <span class="sc">+</span></span>
+<span id="cb61-5"><a href="#cb61-5" tabindex="-1"></a>mix2 <span class="ot">&lt;-</span> <span class="fu">lmeb</span>(yield<span class="sc">~</span> setf <span class="sc">+</span> setf<span class="sc">:</span>repf <span class="sc">+</span></span>
 <span id="cb61-6"><a href="#cb61-6" tabindex="-1"></a>               (<span class="dv">1</span><span class="sc">|</span>femalef<span class="sc">:</span>malef<span class="sc">:</span>setf) <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>malef<span class="sc">:</span>setf) <span class="sc">+</span> </span>
 <span id="cb61-7"><a href="#cb61-7" tabindex="-1"></a>               (<span class="dv">1</span><span class="sc">|</span>femalef<span class="sc">:</span>setf),</span>
 <span id="cb61-8"><a href="#cb61-8" tabindex="-1"></a>              <span class="at">verbose =</span> <span class="dv">0</span><span class="dt">L</span>, <span class="at">trace=</span><span class="dv">0</span><span class="dt">L</span>, <span class="at">data=</span>DT)</span>
@@ -1163,7 +1154,7 @@ model is enough to perform GWAS for additive and on-additive
 effects.</p>
 <p>Let us use the DT_cpdata dataset to explore the GWAS by GBLUP
 method</p>
-<div class="sourceCode" id="cb65"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" tabindex="-1"></a><span class="fu">data</span>(DT_cpdata)</span>
+<div class="sourceCode" id="cb65"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" tabindex="-1"></a><span class="fu">data</span>(DT_cpdata, <span class="at">package=</span><span class="st">&quot;enhancer&quot;</span>)</span>
 <span id="cb65-2"><a href="#cb65-2" tabindex="-1"></a>DT <span class="ot">&lt;-</span> DT_cpdata</span>
 <span id="cb65-3"><a href="#cb65-3" tabindex="-1"></a>GT <span class="ot">&lt;-</span> GT_cpdata<span class="co">#[,1:200]</span></span>
 <span id="cb65-4"><a href="#cb65-4" tabindex="-1"></a>MP <span class="ot">&lt;-</span> MP_cpdata</span>
@@ -1181,7 +1172,7 @@ their standard errors from the genotype effects.</p>
 <span id="cb66-6"><a href="#cb66-6" tabindex="-1"></a><span class="co"># MMTinv&lt;-solve( MMT ) ## inverse</span></span>
 <span id="cb66-7"><a href="#cb66-7" tabindex="-1"></a><span class="co"># MTMMTinv&lt;-t(M)%*%MMTinv # M&#39; %*% (M&#39;M)-</span></span>
 <span id="cb66-8"><a href="#cb66-8" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb66-9"><a href="#cb66-9" tabindex="-1"></a><span class="co"># mix.part &lt;- lmebreed(color ~ (1|id) + (1|Rowf) + (1|Colf),</span></span>
+<span id="cb66-9"><a href="#cb66-9" tabindex="-1"></a><span class="co"># mix.part &lt;- lmeb(color ~ (1|id) + (1|Rowf) + (1|Colf),</span></span>
 <span id="cb66-10"><a href="#cb66-10" tabindex="-1"></a><span class="co">#                      relmat = list(id=MMT),</span></span>
 <span id="cb66-11"><a href="#cb66-11" tabindex="-1"></a><span class="co">#                       verbose = 0L, trace=0L,</span></span>
 <span id="cb66-12"><a href="#cb66-12" tabindex="-1"></a><span class="co">#                      data=DT)</span></span>

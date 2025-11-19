@@ -1,4 +1,5 @@
-\name{lmebreed}
+\name{lmeb}
+\alias{lmeb}
 \alias{lmebreed}
 \title{Fit breeding-related mixed-effects models}
 \description{
@@ -8,12 +9,12 @@
   and Van der Werf (2006).
 }
 \usage{
-lmebreed(formula, data, REML = TRUE, control = list(), start = NULL, 
+lmeb(formula, data, REML = TRUE, control = list(), start = NULL, 
          verbose = 1L, subset, weights, na.action, offset, contrasts = NULL, 
          calc.derivs = FALSE, nIters=100,
-         # lmebreed special params
+         # lmeb special params
          family = NULL, relmat = list(), addmat = list(), trace=1L,
-         dateWarning=TRUE, rotation=FALSE,  rotationK=NULL, coefOutRotation=8, 
+         dateWarning=TRUE, rotation=FALSE,  rotationK=NULL, coefOutRotation=Inf, 
          returnFormula=FALSE, suppressOpt=FALSE, ...)
 }
 \arguments{
@@ -44,14 +45,14 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
   this argument at the level of main argument is to set it as FALSE as default 
   to speed up computation. This means that in lme4breeding if you pass calc.derivs
   inside the lmerControl object it won't have any effect. You need to set it using the 
-  argument in the lmebreed function.}
+  argument in the lmeb function.}
   
   \item{nIters}{the number of iterations used by the \code{\link[lme4]{optimizeGlmer}} 
   and \code{\link[lme4]{optimizeLmer}} functions. Internally, it replaces the values of
   the \code{maxfun} and \code{maxeval} arguments in the \code{\link[lme4]{lmerControl}} 
   optCtrl passed.This means that in lme4breeding if you pass calc.derivs
   inside the lmerControl object it won't have any effect. You need to set it using the 
-  argument in the lmebreed function. }
+  argument in the lmeb function. }
   
   \item{family}{as in \code{\link[lme4]{glmer}}}
   
@@ -75,16 +76,17 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
   
   \item{rotation}{a logical value indicating if you want to compute the eigen decomposition 
   of the relationship matrix to rotate the response vector y and the fixed effect matrix X 
-  in order to accelerate the computation. This argument requires the dataset to be balanced and without
+  in order to accelerate the computation (Lee and Vander Werf, 2016). This argument requires the dataset to be balanced and without
   missing data for the slope variable, intercept variables, and the response involved in the model.
+  Also make sure that your dataset is ordered by intercepts and slopes (e.g., \code{dt = dt[with(dt, order(intercept, slope)), ]}).
   See details to understand more about this argument and vignettes for examples.}
   
   \item{rotationK}{an integer value indicating the number of eigen vectors to compute
   when the rotation argument is set to TRUE. By default all eigen vectors are computed.}
   
   \item{coefOutRotation}{a numeric value denoting the inter-quantile outlier coefficient to
-  be used in the rotation of the response when using the eigen decomposition to avoid 
-  overshooting.}
+  be used in the rotation of the response when using the eigen decomposition. Experimental. 
+  Currently is set to Inf value so no outliers are removed.}
   
   \item{returnFormula}{a logical value indicating if you want to only get the results from
   the \code{\link[lme4]{lFormula}} after the relmat and addmat arguments have been applied.
@@ -130,9 +132,9 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
   activated and variance components differ slightly with other software they will still provide extremely similar 
   estimates at the speed of hundreds or thousands of times faster. Please consider this.
   
-  Additional useful functions are; \code{\link{tps}} for spatial kernels, \code{\link{rrm}} 
-  for reduced rank matrices, \code{\link{atcg1234}} for conversion of genetic markers, 
-  \code{\link{overlay}} for overlay matrices, \code{\link{reshape}} for moving wide 
+  Additional useful functions are; \code{\link[enhancer]{tps}} for spatial kernels, \code{\link[enhancer]{rrm}} 
+  for reduced rank matrices, \code{\link[enhancer]{atcg1234}} for conversion of genetic markers, 
+  \code{\link[enhancer]{overlay}} for overlay matrices, \code{\link{reshape}} for moving wide 
   format multi-trait datasets into long format.
   
   Normally, using the optimizer argument inside the \code{\link[lme4]{lmerControl}} keep 
@@ -141,7 +143,7 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
   called "maxfun" whereas for \code{\link[lme4]{nloptwrap}} is called "maxeval". 
   This should be passed inside a list in the \code{optCtrl} argument. For example:
   
-\code{lmebreed(... , 
+\code{lmeb(... , 
          control = lmerControl(
            optimizer="Nelder_Mead",
            optCtrl=list(maxfun=100)
@@ -174,7 +176,7 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
   }
   
   This is important to notice because if the user decides to specify its own controls
-  then the user should also consider some of these arguments that are the defaults in lmebreed.
+  then the user should also consider some of these arguments that are the defaults in lmeb.
   
   \strong{Methods}
   
@@ -186,7 +188,7 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
   
   \code{\link[lme4]{ranef}}: allows you to extract random coefficients (BLUPs) and their standard errors
   
-  \code{\link{getCi}}: allows you to extract the predicted error variance (PEV) matrix from a model
+  \code{\link{condVarRotated}}: allows you to extract the predicted error variance (PEV) matrix from a model
   
   \code{\link{mkMmeIndex}}: alllows you to extract the indices of the different fixed and random coefficients
   
@@ -196,40 +198,40 @@ lmebreed(formula, data, REML = TRUE, control = list(), start = NULL,
 
 The package has been equiped with several datasets to learn how to use the lme4breeding package:
 
-* \code{\link{DT_big}} simulated dataset containing 1K individuals in 50 environments to show how to fit big models.
+* \code{\link[enhancer]{DT_big}} simulated dataset containing 1K individuals in 50 environments to show how to fit big models.
 
-* \code{\link{DT_btdata}} dataset contains an animal (birds) model.
+* \code{\link[enhancer]{DT_btdata}} dataset contains an animal (birds) model.
 
-* \code{\link{DT_cornhybrids}} dataset to perform genomic prediction in hybrid single crosses 
+* \code{\link[enhancer]{DT_cornhybrids}} dataset to perform genomic prediction in hybrid single crosses 
 
-* \code{\link{DT_cpdata}} dataset to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects. 
+* \code{\link[enhancer]{DT_cpdata}} dataset to fit genomic prediction models within a biparental population coming from 2 highly heterozygous parents including additive, dominance and epistatic effects. 
 
-* \code{\link{DT_fulldiallel}} dataset with examples to fit full diallel designs. 
+* \code{\link[enhancer]{DT_fulldiallel}} dataset with examples to fit full diallel designs. 
 
-* \code{\link{DT_gryphon}} data contains an example of an animal model including pedigree information.
+* \code{\link[enhancer]{DT_gryphon}} data contains an example of an animal model including pedigree information.
 
-* \code{\link{DT_halfdiallel}} dataset with examples to fit half diallel designs. 
+* \code{\link[enhancer]{DT_halfdiallel}} dataset with examples to fit half diallel designs. 
 
-* \code{\link{DT_h2}} to calculate heritability
+* \code{\link[enhancer]{DT_h2}} to calculate heritability
 
-* \code{\link{DT_ige}} dataset to show how to fit indirect genetic effect models.
+* \code{\link[enhancer]{DT_ige}} dataset to show how to fit indirect genetic effect models.
 
-* \code{\link{DT_legendre}} simulated dataset for random regression model.
+* \code{\link[enhancer]{DT_legendre}} simulated dataset for random regression model.
 
-* \code{\link{DT_mohring}} datasets with examples to fit half diallel designs.
+* \code{\link[enhancer]{DT_mohring}} datasets with examples to fit half diallel designs.
 
-* \code{\link{DT_polyploid}} to fit genomic prediction and GWAS analysis in polyploids. 
+* \code{\link[enhancer]{DT_polyploid}} to fit genomic prediction and GWAS analysis in polyploids. 
 
-* \code{\link{DT_sleepstudy}} dataset to know how to translate lme4 models to lme4breeding models.
+* \code{\link[enhancer]{DT_sleepstudy}} dataset to know how to translate lme4 models to lme4breeding models.
 
-* \code{\link{DT_technow}} dataset to perform genomic prediction in hybrid single crosses 
+* \code{\link[enhancer]{DT_technow}} dataset to perform genomic prediction in hybrid single crosses 
 
-* \code{\link{DT_wheat}} dataset to do genomic prediction in single crosses in species displaying only additive effects.
+* \code{\link[enhancer]{DT_wheat}} dataset to do genomic prediction in single crosses in species displaying only additive effects.
 
 
 }
 \value{
-  a \code{\linkS4class{lmebreed}} object.
+  a \code{\linkS4class{lmeb}} object.
 }
 \references{
 
@@ -245,18 +247,44 @@ Lee & Van der Werf (2016). MTG2: an efficient algorithm for multivariate linear 
 }
 \examples{
 
-data(DT_example)
-DT <- DT_example
-A <- A_example
 
-ansMain <- lmebreed(Yield ~ Env + (1|Name),
-                        relmat = list(Name = A ),
-                        data=DT)
-vc <- VarCorr(ansMain); print(vc,comp=c("Variance"))
-sigma(ansMain)^2 # error variance
+nInds=300
+nMarks=1000
+nEnvs=2
 
-BLUP <- ranef(ansMain, condVar=TRUE)
-PEV <- lapply(BLUP, function(x){attr(x, which="postVar")}) # take sqrt() for SEs
+#random population of nInds lines with nMarks markers
+M <- matrix(rep(0,nInds*nMarks),nInds,nMarks)
+for (i in 1:nInds) {
+  M[i,] <- ifelse(runif(nMarks)<0.5,-1,1)
+}
+# compute the relationship matrix
+MMT <- tcrossprod(M)
+m <- sum(diag(MMT))/nrow(MMT)
+MMT <- MMT/m
+MMT <- MMT + diag(1e-05, ncol(MMT), ncol(MMT))
+# get phenotypes
+yl <- el <- il <- list()
+for(iEnv in 1:nEnvs){
+  #random phenotypes
+  u <- rnorm(nMarks)
+  g <- as.vector(crossprod(t(M),u))
+  h2 <- 0.5  #heritability
+  envEffect <- rnorm(1, mean = abs(rnorm(1)))
+  yl[[iEnv]] <- g + rnorm(nInds,mean=0,sd=sqrt((1-h2)/h2*var(g))) + envEffect
+  el[[iEnv]] <- rep(paste0("e",iEnv), length(g))
+  il[[iEnv]] <-  paste0("i",1:length(g))
+}
+y <- unlist(yl)
+env <- unlist(el)
+ind <- unlist(il)
+colnames(MMT) <- rownames(MMT) <- paste0("i",1:length(g))
+# fit the mixed model with rotation
+mix <- lmeb(y~env + (0+env|ind), relmat=list(ind=MMT), rotation = TRUE )
+vc <- VarCorr(mix); print(vc,comp=c("Variance"))
+# lattice::levelplot(cov2cor(vc$ind))
+# retrieve parameters
+BLUP <- ranef(mix, condVar=TRUE)
+condVAR <- lapply(BLUP, function(x){attr(x, which="postVar")}) # take sqrt() for SEs
 
 
 }

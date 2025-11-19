@@ -3,11 +3,11 @@
 library(lme4breeding)
 
 ## -----------------------------------------------------------------------------
-data(DT_example)
+data(DT_example, package="enhancer")
 DT <- DT_example
 A <- A_example
 
-ans1 <- lmebreed(Yield~ (1|Name) + (1|Env) + 
+ans1 <- lmeb(Yield~ (1|Name) + (1|Env) + 
                    (1|Env:Name) + (1|Env:Block),
              verbose = FALSE, data=DT)
 
@@ -22,8 +22,8 @@ head(BLUP$Name)
 head(PEV$Name)
 
 ## -----------------------------------------------------------------------------
-Ci <- getCi(ans1)
-Matrix::image(Ci)
+condVarAns <- condVarRotated(ans1)
+Matrix::image(condVarAns)
 
 ## -----------------------------------------------------------------------------
 pp <- predict(ans1, classify="Name")
