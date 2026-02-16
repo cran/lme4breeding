@@ -40,9 +40,12 @@
 
 2025-12-27 Giovanny Covarrubias Pazaran <cova_ruber@live.com.mx>
 
-      * [r_1.1.10] I have finally found the bug for the rotation when multiple random effects are present. Now it works as proposed by Lee and Vander Werf 2006
+      * [r_1.1.0] I have finally found the bug for the rotation when multiple random effects are present. Now it works as proposed by Lee and Vander Werf 2006
 
+2026-03-01 Giovanny Covarrubias Pazaran <cova_ruber@live.com.mx>
 
+      * [r_1.1.1] Johan's pull request merged and minor documentation improvements
+      
 ** TO DO
 
 

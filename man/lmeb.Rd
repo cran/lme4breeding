@@ -78,7 +78,8 @@ lmeb(formula, data, REML = TRUE, control = list(), start = NULL,
   of the relationship matrix to rotate the response vector y and the fixed effect matrix X 
   in order to accelerate the computation (Lee and Vander Werf, 2016). This argument requires the dataset to be balanced and without
   missing data for the slope variable, intercept variables, and the response involved in the model.
-  Also make sure that your dataset is ordered by intercepts and slopes (e.g., \code{dt = dt[with(dt, order(intercept, slope)), ]}).
+  Also make sure that your dataset is sorted by intercepts and slopes so the rotation
+  that is applied consequtively makes sense (e.g., \code{dt = dt[with(dt, order(intercept, slope)), ]}).
   See details to understand more about this argument and vignettes for examples.}
   
   \item{rotationK}{an integer value indicating the number of eigen vectors to compute

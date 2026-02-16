@@ -242,7 +242,8 @@ getMME <- function(object, vc=NULL, recordsToUse=NULL){
     rowsi <- list()
     for(j in 1:length(tn)){ # j=1
       ind <- (object@Gp)[tn[j]:(tn[j]+1L)]
-      rowsi[[j]] <- ((ind[1]+1L):ind[2])+1
+      # rowsi[[j]] <- ((ind[1]+1L):ind[2])+1 # Error
+      rowsi[[j]] <- ((ind[1] + 1L):ind[2]) + ncol(X)
     }
     Gi[unlist(rowsi),unlist(rowsi)] <- kronecker( LLt , solve( Matrix::nearPD( vcov )$mat ) )
     ##
