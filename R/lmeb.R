@@ -1,11 +1,11 @@
 #### "relmat" class methods
 lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), start = NULL, 
-                      verbose = 1L, subset, weights, na.action, offset, contrasts = NULL,
-                      calc.derivs=FALSE, nIters=100,
-                      # new params
-                      family = NULL, relmat = list(),  addmat=list(), trace=1L,
-                      dateWarning=TRUE, rotation=FALSE, rotationK=NULL, coefOutRotation=Inf, 
-                      returnFormula=FALSE, suppressOpt=FALSE, ...)
+                              verbose = 1L, subset, weights, na.action, offset, contrasts = NULL,
+                              calc.derivs=FALSE, nIters=100,
+                              # new params
+                              family = NULL, relmat = list(),  addmat=list(), trace=1L,
+                              dateWarning=TRUE, rotation=FALSE, rotationK=NULL, coefOutRotation=Inf, 
+                              returnFormula=FALSE, suppressOpt=FALSE, ...)
 {
   my.date <- "2026-06-01" # expiry date
   your.date <- Sys.Date()
@@ -287,6 +287,8 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
     }else{ # classical approach, just cholesky
       if(trace){message(magenta("* Cholesky of relmats step."))}
       for (i in seq_along(relmat)) {
+        idsOrdered <- as.character(unique(lmod$fr[,names(relmat)[i]])) # when we rotate we need to have relmat already ordered before creating the matrices
+        relmat[[i]] = relmat[[i]][ idsOrdered , idsOrdered ]
         relmat[[i]] <- Matrix::chol(relmat[[i]])
       }
     }
@@ -576,7 +578,6 @@ setMethod("residuals", signature(object = "lmeb"),
           function(object, ...) {
             getME(object, "y") - fitted(object)
           })
-
 
 
 

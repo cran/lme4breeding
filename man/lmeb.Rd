@@ -249,9 +249,14 @@ Lee & Van der Werf (2016). MTG2: an efficient algorithm for multivariate linear 
 \examples{
 
 
+
 nInds=300
 nMarks=1000
 nEnvs=2
+
+G <- enhancer::simGECorMat(nEnvs, nMegaEnv=1)
+G <- Matrix::nearPD(G)$mat
+u <- MASS::mvrnorm(n = nMarks, rep(0, nEnvs), Sigma=G)
 
 #random population of nInds lines with nMarks markers
 M <- matrix(rep(0,nInds*nMarks),nInds,nMarks)
@@ -267,8 +272,8 @@ MMT <- MMT + diag(1e-05, ncol(MMT), ncol(MMT))
 yl <- el <- il <- list()
 for(iEnv in 1:nEnvs){
   #random phenotypes
-  u <- rnorm(nMarks)
-  g <- as.vector(crossprod(t(M),u))
+  # u <- rnorm(nMarks)
+  g <- as.vector(crossprod(t(M),u[,iEnv]))
   h2 <- 0.5  #heritability
   envEffect <- rnorm(1, mean = abs(rnorm(1)))
   yl[[iEnv]] <- g + rnorm(nInds,mean=0,sd=sqrt((1-h2)/h2*var(g))) + envEffect
@@ -280,12 +285,17 @@ env <- unlist(el)
 ind <- unlist(il)
 colnames(MMT) <- rownames(MMT) <- paste0("i",1:length(g))
 # fit the mixed model with rotation
-mix <- lmeb(y~env + (0+env|ind), relmat=list(ind=MMT), rotation = TRUE )
+mix <- lmeb(y~env + (0+env|ind), relmat=list(ind=MMT), 
+            nIters = 2000, rotation = TRUE)
 vc <- VarCorr(mix); print(vc,comp=c("Variance"))
 # lattice::levelplot(cov2cor(vc$ind))
 # retrieve parameters
 BLUP <- ranef(mix, condVar=TRUE)
 condVAR <- lapply(BLUP, function(x){attr(x, which="postVar")}) # take sqrt() for SEs
+
+sigmaG <- cov2cor(vc$ind)
+hist(sigmaG[lower.tri(sigmaG)], xlim=c(-1,1))
+
 
 
 }

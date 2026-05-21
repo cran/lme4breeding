@@ -1,6 +1,6 @@
 Package: lme4breeding
-Version: 1.1.1
-Date: 2026-02-14
+Version: 1.1.2
+Date: 2026-05-20
 Title: Breeding-Related Mixed-Effects Models
 Authors@R: c(
     person("Giovanny","Covarrubias-Pazaran", email="cova_ruber@live.com.mx", role=c("aut","cre"),
@@ -16,9 +16,9 @@ License: GPL (>= 2)
 Author: Giovanny Covarrubias-Pazaran [aut, cre] (ORCID:
     <https://orcid.org/0000-0002-7194-3837>)
 Repository: CRAN
-Suggests: rmarkdown, knitr, orthopolynom, RSpectra
+Suggests: rmarkdown, knitr, orthopolynom, MASS, RSpectra
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2026-02-16 03:30:52 UTC; giovannycovarrubias
-Date/Publication: 2026-02-16 01:00:01 UTC
+Packaged: 2026-05-21 03:20:50 UTC; giovannycovarrubias
+Date/Publication: 2026-05-21 02:20:02 UTC
