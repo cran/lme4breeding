@@ -1,15 +1,15 @@
 #### "relmat" class methods
 lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), start = NULL, 
-                              verbose = 1L, subset, weights, na.action, offset, contrasts = NULL,
-                              calc.derivs=FALSE, nIters=100,
-                              # new params
-                              family = NULL, relmat = list(),  addmat=list(), trace=1L,
-                              dateWarning=TRUE, rotation=FALSE, rotationK=NULL, coefOutRotation=Inf, 
-                              returnFormula=FALSE, suppressOpt=FALSE, ...)
+                      verbose = 1L, subset, weights, na.action, offset, contrasts = NULL,
+                      calc.derivs=FALSE, nIters=100,
+                      # new params
+                      family = NULL, relmat = list(),  addmat=list(), trace=1L,
+                      dateWarning=TRUE, rotation=FALSE, rotationK=NULL, coefOutRotation=Inf, 
+                      returnFormula=FALSE, suppressOpt=FALSE, ...)
 {
-  my.date <- "2026-06-01" # expiry date
+  desc <- utils::packageDescription("lme4breeding")
+  my.date <- as.Date(desc$Date)+90
   your.date <- Sys.Date()
-  
   ## if your month is greater than my month you are outdated
   if(dateWarning){
     if (your.date > my.date) {
@@ -84,6 +84,7 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
     intercept <- gsub(" ","",intercept)
     slope <- ithRandomTerm[-c(1)]
     slope <- gsub(" ","",slope)
+    slope <- setdiff(slope, "")
     for(k in 1:length(intercept)){ # k=2 # for each intercept int1+int2+int3 | slope
       interceptK <- intercept[k]
       if(!missing(data)){
@@ -92,6 +93,7 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
         checkExistInterK <- exists(interceptK)
       }
       if(checkExistInterK){ # if the kth intercept is part of the model.frame or is in the environment
+        
         if( classDT[interceptK] %in% c("factor","character") ){ # if is a character of factor get levels and add
           
           if(!missing(data)){ # we can add the dummy variable to the data
@@ -116,6 +118,11 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
           } # "IHYB23Rattray"
         }else{
           levsIntercept <- interceptK
+          if(!missing(data)){ # we can add the dummy variable to the data
+            variableForInterK <- gsub("[^a-zA-Z0-9._]", "", data[,interceptK]) # we remove special characters from intercept variable except dots or underscores
+          }else{ # we have to create the variables and put them in the environment
+            variableForInterK <- gsub("[^a-zA-Z0-9._]", "", get(interceptK)) # we remove special characters from intercept variable except dots or underscores
+          }
           if("unitsR" %in% slope){
             unitsR <- as.factor(1:length(variableForInterK))
             if(!missing(data)){data$unitsR <- unitsR}
@@ -169,7 +176,6 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
     control$optCtrl$maxeval=nIters
   }
   # lmerc$formula <- formula; lmerc$data <- data; 
-  # lmerc$control <- control # only if we are using it 
   ## silence additional parameters from lme4breeding that don't apply to lmer
   lmerc[[1]] <- if (gaus){as.name("lmer")}else{as.name("glmer")} 
   lmerc$family <- family
@@ -231,7 +237,6 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
   }
   suppressWarnings( lmod <- eval.parent(lmerc) , classes = "warning") # necesary objects from lFormula
   # return(lmod)
-  
   ## DO ROTATION OF RESPONSE AND RELMATS IF REQUIRED (lmod$fr[,response])
   '%!in%' <- function(x,y)!('%in%'(x,y)) 
   # control to ignore relmats if there's no match with formula vars
@@ -254,6 +259,9 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
     if(rotation){ # if UDU decomposition + Cholesky is requested
       if(length(relmat) > 1){warning("Rotation is only reported to be accurate with one relationship matrix. Make sure you are using the same relationship matrix for the different random effects for the rotation approach.", call. = FALSE)}
       for(iRel in 1:length(relmat)){
+        if(any(c(is.null(rownames(relmat[[iRel]])), is.null(colnames(relmat[[iRel]]))))){
+          stop(paste("relmat for term:", names(relmat)[iRel], "has no rownames or colnames. Please correct."), call. = FALSE)
+        }
         idsOrdered <- as.character(unique(lmod$fr[,names(relmat)[iRel]])) # when we rotate we need to have relmat already ordered before creating the matrices
         relmat[[iRel]] = relmat[[iRel]][ idsOrdered , idsOrdered ]
       }
@@ -287,9 +295,14 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
     }else{ # classical approach, just cholesky
       if(trace){message(magenta("* Cholesky of relmats step."))}
       for (i in seq_along(relmat)) {
-        idsOrdered <- as.character(unique(lmod$fr[,names(relmat)[i]])) # when we rotate we need to have relmat already ordered before creating the matrices
-        relmat[[i]] = relmat[[i]][ idsOrdered , idsOrdered ]
-        relmat[[i]] <- Matrix::chol(relmat[[i]])
+        if(names(relmat)[i] %in% all.vars(formula)){
+          if(any(c(is.null(rownames(relmat[[i]])), is.null(colnames(relmat[[i]]))))){
+          stop(paste("relmat for term:", names(relmat)[i], "has no rownames or colnames. Please correct."), call. = FALSE)
+          }
+          idsOrdered <- as.character(unique(lmod$fr[,names(relmat)[i]])) # when we rotate we need to have relmat already ordered before creating the matrices
+          relmat[[i]] = relmat[[i]][ idsOrdered , idsOrdered ]
+          relmat[[i]] <- Matrix::chol(relmat[[i]])
+        }
       }
     }
   }
@@ -299,7 +312,9 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
   pnms <- names(relmat)
   pnms2 <- names(addmat)
   fl <- lmod$reTrms$flist
-  stopifnot(all(pnms %in% names(fl)))
+  if(!all(pnms %in% names(fl))){
+    stop("Not all relationship matrices seem to have correspondance with your formula variables. Please review.", call. = FALSE)
+  }
   asgn <- attr(fl, "assign")
   Zt <- lmod$reTrms$Zt
   ##############################
@@ -382,7 +397,8 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
         }
       }
       # multiply by the provRelFac or by the Utn matrix
-      if( length(lmod$reTrms$cnms[[j]]) == 1 ){ # regular model (intercept || slope) OR (1 | slope )
+      # needs to be lmod$reTrms$cnms[[tn[j]]] otherwise more than one random effect fails
+      if( length( lmod$reTrms$cnms[[tn[j]]] ) == 1 ){ # regular model (intercept || slope) OR (1 | slope )
         
         ZtL <- list() # we have to do this because filling by rows a Column-oriented matrix is extremely slow so it is faster to cut and paste
         
@@ -408,11 +424,13 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
             # right part
             if(max(rowsi) < nrow(Zt)){ZtL[[3]] <- Zt[(max(rowsi)+1):nrow(Zt),]}
             Zt <- do.call(rbind, ZtL) # bind all
+          }else{ # maybe (1|unitsR)
+            # no need to modify Zt
           }
         }
         
       }else{ # complex model (intercept | slope)
-        mm <- Matrix::Diagonal( length(lmod$reTrms$cnms[[j]]) )
+        mm <- Matrix::Diagonal( length( lmod$reTrms$cnms[[tn[j]]] ) ) # needs to be lmod$reTrms$cnms[[tn[j]]] otherwise more than one random effect fails
         ZtL <- list()
         if(namR[i] %in% names(relmat) ){ # if random effect has a relmat
           # left part
@@ -512,7 +530,6 @@ lmebreed <-  lmeb <- function(formula, data, REML = TRUE, control = list(), star
 
 setMethod("ranef", signature(object = "lmeb"),
           function(object, condVar = TRUE, drop = FALSE, whichel = names(ans), includeCVM=TRUE, verbose=1L, ...)  {
-            # print("new")
             relmat <- ifelse(length(object@relfac) > 0, TRUE, FALSE)
             if(relmat){rf <- object@relfac}
             ans <- lme4::ranef(object, condVar=FALSE, drop = FALSE) # extracts condVar 1st time
@@ -578,6 +595,7 @@ setMethod("residuals", signature(object = "lmeb"),
           function(object, ...) {
             getME(object, "y") - fitted(object)
           })
+
 
 
 
