@@ -108,50 +108,50 @@ ve <- attr(vc, "sc")^2; ve
 
 ## -----------------------------------------------------------------------------
 
-data(DT_h2, package="enhancer")
-DT <- DT_h2
-DT=DT[with(DT, order(Env)), ]
-head(DT)
-indNames <- na.omit(unique(DT$Name))
-A <- diag(length(indNames))
-rownames(A) <- colnames(A) <- indNames
-
-# fit diagonal model first to produce a two-way table of genotype by env BLUPs
-Z <- with(DT, smm(Env))
-diagFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"), "|| Name)")
-for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-ans1a <- lmeb(as.formula(diagFormula),
-                  relmat = list(Name = A ),
-                  verbose = 0L, trace=0L, 
-                  data=DT)
-vc <- VarCorr(ans1a); 
-H0 <- ranef(ans1a)$Name # GxE table
-
-# Use the GxE table to obtain loadings and build loadings columns in dataset
-nPC=3
-Z <- with(DT,  rrm(Env, H = H0, nPC = nPC) ) 
-for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
-# fit the FA model (rr + diag) to calculate factor scores
-ansFA <- lmeb(y ~ Env + (0+PC1+PC2+PC3|Name) + (0+Env|| Name),
-                  relmat = list(Name = A ),
-                  verbose = 0L, trace=0L, data=DT)
-
-u <- ranef(ansFA)$Name # all BLUPs
-scores <- as.matrix(u[,1:nPC])  # extract factor scores
-loadings=with(DT, rrm(Env, nPC = nPC, H = H0, # lodings (latent covars)
-                      returnGamma = TRUE) )$Gamma
-
-vc <- VarCorr(ansFA); print(vc,comp=c("Variance")) # extract all varcomps
-vcFA <- vc[[1]] # G of PCs only
-vcDG <- diag( unlist(lapply(vc[2:16], function(x){x[[1]]})) ) # G of diag model
-vcUS <- loadings %*% vcFA %*% t(loadings) # G of unstructured model
-G <- vcUS + vcDG # total G as the sum of both Gs
-colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
-hv <- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)
-
-uFA <- scores %*% t(loadings) # recover UNS effects
-uDG <- as.matrix(u[,(nPC+1):ncol(u)]) # recover DIAG effects 
-u <- uFA + uDG # total effects
+# data(DT_h2, package="enhancer")
+# DT <- DT_h2
+# DT=DT[with(DT, order(Env)), ]
+# head(DT)
+# indNames <- na.omit(unique(DT$Name))
+# A <- diag(length(indNames))
+# rownames(A) <- colnames(A) <- indNames
+# 
+# # fit diagonal model first to produce a two-way table of genotype by env BLUPs
+# Z <- with(DT, smm(Env))
+# diagFormula <- paste0( "y ~ Env + (0+", paste(colnames(Z), collapse = "+"), "|| Name)")
+# for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
+# ans1a <- lmeb(as.formula(diagFormula),
+#                   relmat = list(Name = A ),
+#                   verbose = 0L, trace=0L, 
+#                   data=DT)
+# vc <- VarCorr(ans1a); 
+# H0 <- ranef(ans1a)$Name # GxE table
+# 
+# # Use the GxE table to obtain loadings and build loadings columns in dataset
+# nPC=3
+# Z <- with(DT,  rrmat(Env, H = H0, nPC = nPC) ) 
+# for(i in 1:ncol(Z)){DT[,colnames(Z)[i]] <- Z[,i]}
+# # fit the FA model (rr + diag) to calculate factor scores
+# ansFA <- lmeb(y ~ Env + (0+PC1+PC2+PC3|Name) + (0+Env|| Name),
+#                   relmat = list(Name = A ),
+#                   verbose = 0L, trace=0L, data=DT)
+# 
+# u <- ranef(ansFA)$Name # all BLUPs
+# scores <- as.matrix(u[,1:nPC])  # extract factor scores
+# loadings=with(DT, rrmat(Env, nPC = nPC, H = H0, # lodings (latent covars)
+#                       returnGamma = TRUE) )$Gamma
+# 
+# vc <- VarCorr(ansFA); print(vc,comp=c("Variance")) # extract all varcomps
+# vcFA <- vc[[1]] # G of PCs only
+# vcDG <- diag( unlist(lapply(vc[2:16], function(x){x[[1]]})) ) # G of diag model
+# vcUS <- loadings %*% vcFA %*% t(loadings) # G of unstructured model
+# G <- vcUS + vcDG # total G as the sum of both Gs
+# colfunc <- colorRampPalette(c("steelblue4","springgreen","yellow"))
+# hv <- heatmap(cov2cor(G), col = colfunc(100), symm = TRUE)
+# 
+# uFA <- scores %*% t(loadings) # recover UNS effects
+# uDG <- as.matrix(u[,(nPC+1):ncol(u)]) # recover DIAG effects 
+# u <- uFA + uDG # total effects
 
 
 ## -----------------------------------------------------------------------------
@@ -274,7 +274,7 @@ with(DTc[which(DTc$nas ==1),], cor(gebv,gv)) # accuracy is ~0.62
 
 ## -----------------------------------------------------------------------------
 # # get latent covariates and add them to the dataset
-# Gammas <- with(DT,  rrm(envf_repf, H = ran0$id, nPC = 3, returnGamma = TRUE))
+# Gammas <- with(DT,  rrmat(envf_repf, H = ran0$id, nPC = 3, returnGamma = TRUE))
 # Zrr <- Gammas$Zstar
 # for(i in 1:ncol(Zrr)){DT[,colnames(Zrr)[i]] <- Zrr[,i]}
 # # fit the model

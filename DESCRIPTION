@@ -1,6 +1,6 @@
 Package: lme4breeding
-Version: 1.1.4
-Date: 2026-09-10
+Version: 1.1.5
+Date: 2026-10-01
 Title: Breeding-Related Mixed-Effects Models
 Authors@R: c(
     person("Giovanny","Covarrubias-Pazaran", email="cova_ruber@live.com.mx", role=c("aut","cre"),
@@ -20,5 +20,5 @@ Suggests: rmarkdown, knitr, orthopolynom, MASS, RSpectra
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2026-09-11 03:02:29 UTC; giovannycovarrubias
-Date/Publication: 2026-09-11 06:40:15 UTC
+Packaged: 2026-10-05 05:51:52 UTC; giovannycovarrubias
+Date/Publication: 2026-10-05 03:10:13 UTC

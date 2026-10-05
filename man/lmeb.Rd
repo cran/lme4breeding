@@ -133,7 +133,7 @@ lmeb(formula, data, REML = TRUE, control = list(), start = NULL,
   activated and variance components differ slightly with other software they will still provide extremely similar 
   estimates at the speed of hundreds or thousands of times faster. Please consider this.
   
-  Additional useful functions are; \code{\link[enhancer]{tps}} for spatial kernels, \code{\link[enhancer]{rrm}} 
+  Additional useful functions are; \code{\link[enhancer]{tps}} for spatial kernels, rrmat
   for reduced rank matrices, \code{\link[enhancer]{atcg1234}} for conversion of genetic markers, 
   \code{\link[enhancer]{overlay}} for overlay matrices, \code{\link{reshape}} for moving wide 
   format multi-trait datasets into long format.
